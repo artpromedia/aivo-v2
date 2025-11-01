@@ -1,0 +1,805 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ================================
+// TENANT AND ORGANIZATION MODELS
+// ================================
+
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  domain      String?  @unique
+  region      String   // Region enum
+  timezone    String   @default("UTC")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  // Relationships
+  districts   District[]
+  schools     School[]
+  users       User[]
+  subscriptions Subscription[]
+
+  @@map("tenants")
+}
+
+model District {
+  id        String    @id @default(cuid())
+  tenantId  String
+  name      String
+  code      String?   @unique
+  address   Json?     // Address object
+  contactInfo Json?   // Contact information
+  settings  Json?     // District-specific settings
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relationships
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  schools   School[]
+  users     User[]
+
+  @@map("districts")
+}
+
+model School {
+  id          String    @id @default(cuid())
+  tenantId    String
+  districtId  String?
+  name        String
+  code        String?   @unique
+  type        String    // elementary, middle, high, k12, etc.
+  address     Json?     // Address object
+  contactInfo Json?     // Contact information
+  settings    Json?     // School-specific settings
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  // Relationships
+  tenant      Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  district    District?  @relation(fields: [districtId], references: [id])
+  users       User[]
+  classrooms  Classroom[]
+  ieps        IEP[]
+  assessments Assessment[]
+
+  @@map("schools")
+}
+
+model Classroom {
+  id          String    @id @default(cuid())
+  schoolId    String
+  name        String
+  gradeLevel  String    // GradeLevel enum
+  subject     String?   // Subject enum
+  capacity    Int       @default(30)
+  settings    Json?     // Classroom-specific settings
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  // Relationships
+  school      School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teachers    User[] @relation("ClassroomTeachers")
+  students    User[] @relation("ClassroomStudents")
+
+  @@map("classrooms")
+}
+
+// ================================
+// USER MANAGEMENT MODELS
+// ================================
+
+model User {
+  id            String    @id @default(cuid())
+  tenantId      String
+  email         String?   @unique
+  phoneNumber   String?   @unique
+  firstName     String
+  lastName      String
+  displayName   String?
+  avatar        String?
+  role          String    // UserRole enum
+  status        String    @default("active") // Status enum
+  lastLoginAt   DateTime?
+  passwordHash  String?
+  emailVerified Boolean   @default(false)
+  phoneVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  // Role-specific fields (JSON for flexibility)
+  roleData      Json?     // Store role-specific data
+
+  // Relationships
+  tenant        Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  district      District? @relation(fields: [districtId], references: [id])
+  school        School? @relation(fields: [schoolId], references: [id])
+
+  // Multi-role relationships
+  districtId    String?
+  schoolId      String?
+  
+  // Student relationships
+  teacherClassrooms  Classroom[] @relation("ClassroomTeachers")
+  studentClassrooms  Classroom[] @relation("ClassroomStudents")
+  parentRelations    ParentStudentRelation[] @relation("ParentUser")
+  childRelations     ParentStudentRelation[] @relation("StudentUser")
+  
+  // IEP relationships
+  studentIEPs        IEP[] @relation("StudentIEP")
+  teamMemberIEPs     IEPTeamMember[]
+  
+  // Assessment relationships
+  createdAssessments Assessment[] @relation("AssessmentCreator")
+  assignedAssessments AssessmentAssignment[]
+  assessmentAttempts AssessmentAttempt[]
+  
+  // AI relationships
+  personalAIModel    PersonalAIModel?
+  aiConversations    AIConversation[]
+  
+  // Session management
+  sessions          UserSession[]
+  
+  // Audit and consent
+  consentRecords    ConsentRecord[]
+
+  @@map("users")
+}
+
+model ParentStudentRelation {
+  id             String    @id @default(cuid())
+  parentId       String
+  studentId      String
+  relationship   String    // parent, guardian, foster, etc.
+  isPrimary      Boolean   @default(false)
+  isEmergency    Boolean   @default(false)
+  canPickup      Boolean   @default(true)
+  receiveNotifications Boolean @default(true)
+  contactMethod  String    @default("email")
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relationships
+  parent         User @relation("ParentUser", fields: [parentId], references: [id], onDelete: Cascade)
+  student        User @relation("StudentUser", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+  @@map("parent_student_relations")
+}
+
+model UserSession {
+  id              String    @id @default(cuid())
+  userId          String
+  sessionToken    String    @unique
+  refreshToken    String?   @unique
+  deviceId        String?
+  ipAddress       String?
+  userAgent       String?
+  isActive        Boolean   @default(true)
+  expiresAt       DateTime
+  lastActivityAt  DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+model ConsentRecord {
+  id          String    @id @default(cuid())
+  userId      String
+  type        String    // ConsentType enum
+  granted     Boolean
+  grantedBy   String?   // Parent/Guardian ID
+  ipAddress   String?
+  userAgent   String?
+  metadata    Json?
+  grantedAt   DateTime
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relationships
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("consent_records")
+}
+
+// ================================
+// ASSESSMENT MODELS
+// ================================
+
+model Assessment {
+  id                    String    @id @default(cuid())
+  title                 String
+  description           String?
+  type                  String    // AssessmentType enum
+  subject               String    // Subject enum
+  gradeLevel            String    // GradeLevel enum
+  totalPoints           Int       @default(0)
+  timeLimit             Int?      // minutes
+  attemptsAllowed       Int       @default(1)
+  showFeedback          Boolean   @default(true)
+  showCorrectAnswers    Boolean   @default(false)
+  randomizeQuestions    Boolean   @default(false)
+  randomizeOptions      Boolean   @default(false)
+  isAdaptive            Boolean   @default(false)
+  passingScore          Int?
+  schoolId              String
+  districtId            String?
+  createdBy             String
+  dueDate               DateTime?
+  availableFrom         DateTime  @default(now())
+  availableUntil        DateTime?
+  status                String    @default("draft")
+  metadata              Json?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  deletedAt             DateTime?
+
+  // Relationships
+  school                School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  creator               User @relation("AssessmentCreator", fields: [createdBy], references: [id])
+  questions             AssessmentQuestion[]
+  assignments           AssessmentAssignment[]
+  attempts              AssessmentAttempt[]
+
+  @@map("assessments")
+}
+
+model AssessmentQuestion {
+  id                String    @id @default(cuid())
+  assessmentId      String
+  type              String    // QuestionType enum
+  subject           String    // Subject enum
+  gradeLevel        String    // GradeLevel enum
+  difficultyLevel   String    // DifficultyLevel enum
+  standardIds       String[]  // Array of curriculum standard IDs
+  questionText      String
+  questionMedia     Json?     // Media object
+  options           Json?     // Array of options for multiple choice
+  correctAnswer     Json?     // Correct answer(s)
+  rubric            Json?     // Rubric for scoring
+  points            Int       @default(1)
+  timeLimit         Int?      // seconds
+  accommodations    Json?     // Accommodations object
+  aiGenerated       Boolean   @default(false)
+  sequence          Int       @default(0)
+  isActive          Boolean   @default(true)
+  createdBy         String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  assessment        Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  responses         AssessmentResponse[]
+
+  @@map("assessment_questions")
+}
+
+model AssessmentAssignment {
+  id            String    @id @default(cuid())
+  assessmentId  String
+  studentId     String
+  assignedBy    String
+  assignedAt    DateTime  @default(now())
+  dueDate       DateTime?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  status        String    @default("assigned") // assigned, started, completed, graded
+  accommodations Json?    // Student-specific accommodations
+  notes         String?
+
+  // Relationships
+  assessment    Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  student       User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, studentId])
+  @@map("assessment_assignments")
+}
+
+model AssessmentAttempt {
+  id            String    @id @default(cuid())
+  assessmentId  String
+  studentId     String
+  attemptNumber Int
+  sessionId     String?
+  startedAt     DateTime  @default(now())
+  submittedAt   DateTime?
+  timeSpent     Int       @default(0) // seconds
+  score         Float?
+  percentage    Float?
+  passed        Boolean?
+  feedback      String?
+  gradedBy      String?
+  gradedAt      DateTime?
+  flaggedForReview Boolean @default(false)
+  accommodationsUsed String[]
+  aiInsights    Json?
+  metadata      Json?
+
+  // Relationships
+  assessment    Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  student       User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  responses     AssessmentResponse[]
+
+  @@map("assessment_attempts")
+}
+
+model AssessmentResponse {
+  id            String    @id @default(cuid())
+  attemptId     String
+  questionId    String
+  answer        Json      // Student's answer
+  timeSpent     Int       @default(0) // seconds
+  isCorrect     Boolean?
+  pointsEarned  Float?
+  feedback      String?
+  flagged       Boolean   @default(false)
+  sequence      Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships
+  attempt       AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question      AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+  @@map("assessment_responses")
+}
+
+// ================================
+// CURRICULUM MODELS
+// ================================
+
+model CurriculumStandard {
+  id                String    @id @default(cuid())
+  code              String    @unique
+  title             String
+  description       String
+  framework         String    // CurriculumFramework enum
+  region            String    // Region enum
+  country           String
+  state             String?
+  subject           String    // Subject enum
+  gradeLevel        String    // GradeLevel enum
+  domain            String
+  cluster           String?
+  subCluster        String?
+  learningObjectives String[]
+  prerequisiteIds   String[]  // IDs of prerequisite standards
+  masteryLevel      Int       @default(1)
+  bloomsLevel       String
+  cognitiveComplexity String
+  tags              String[]
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("curriculum_standards")
+}
+
+// ================================
+// AI MODELS
+// ================================
+
+model AIModel {
+  id                String    @id @default(cuid())
+  name              String
+  description       String
+  type              String    // AIModelType enum
+  provider          String    // ModelProvider enum
+  version           String
+  status            String    @default("training") // ModelStatus enum
+  capabilities      String[]
+  supportedSubjects String[]  // Subject enum values
+  supportedGrades   String[]  // GradeLevel enum values
+  maxTokens         Int?
+  temperature       Float?
+  topP              Float?
+  frequencyPenalty  Float?
+  presencePenalty   Float?
+  stopSequences     String[]
+  systemPrompt      String?
+  safetySettings    Json
+  metadata          Json?
+  createdBy         String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deployedAt        DateTime?
+  lastUsedAt        DateTime?
+
+  // Relationships
+  personalModels    PersonalAIModel[]
+  conversations     AIConversation[]
+  generatedContent  AIGeneratedContent[]
+
+  @@map("ai_models")
+}
+
+model PersonalAIModel {
+  id                  String    @id @default(cuid())
+  studentId           String    @unique
+  baseModelId         String
+  name                String
+  personalityTraits   Json      // PersonalityTraits object
+  learningPreferences Json      // LearningPreferences object
+  communicationStyle  Json      // CommunicationStyle object
+  adaptations         Json      // Adaptations object
+  performanceMetrics  Json      // PerformanceMetrics object
+  trainingData        Json      // TrainingData object
+  isActive            Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relationships
+  student             User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  baseModel           AIModel @relation(fields: [baseModelId], references: [id])
+
+  @@map("personal_ai_models")
+}
+
+model AIConversation {
+  id            String    @id @default(cuid())
+  studentId     String
+  aiModelId     String
+  sessionId     String
+  context       Json      // Conversation context
+  metadata      Json      // Conversation metadata
+  isActive      Boolean   @default(true)
+  endedAt       DateTime?
+  endReason     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships
+  student       User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  aiModel       AIModel @relation(fields: [aiModelId], references: [id])
+  messages      AIMessage[]
+
+  @@map("ai_conversations")
+}
+
+model AIMessage {
+  id              String    @id @default(cuid())
+  conversationId  String
+  role            String    // user, assistant, system
+  content         String
+  metadata        Json      // Message metadata
+  attachments     Json?     // Array of attachments
+  feedback        Json?     // User feedback
+  createdAt       DateTime  @default(now())
+
+  // Relationships
+  conversation    AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("ai_messages")
+}
+
+model AIGeneratedContent {
+  id            String    @id @default(cuid())
+  type          String    // Content type
+  modelId       String
+  subject       String    // Subject enum
+  gradeLevel    String    // GradeLevel enum
+  topic         String
+  content       String
+  metadata      Json      // Generation metadata
+  usage         Json      // Usage statistics
+  alignment     Json      // Curriculum alignment
+  isApproved    Boolean   @default(false)
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  createdBy     String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships
+  model         AIModel @relation(fields: [modelId], references: [id])
+
+  @@map("ai_generated_content")
+}
+
+// ================================
+// IEP MODELS
+// ================================
+
+model IEP {
+  id            String    @id @default(cuid())
+  studentId     String
+  schoolId      String
+  districtId    String?
+  status        String    @default("draft") // IEPStatus enum
+  studentInfo   Json      // Student information
+  dates         Json      // IEP dates and timeline
+  presentLevels Json      // Present levels of performance
+  placement     Json      // LRE and placement information
+  assessmentAccommodations Json // Assessment accommodations
+  extendedSchoolYear Json? // ESY information
+  transition    Json?     // Transition services (14+)
+  parentInput   String?
+  studentInput  String?
+  createdBy     String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  approvedAt    DateTime?
+  approvedBy    String?
+  deletedAt     DateTime?
+
+  // Relationships
+  student       User @relation("StudentIEP", fields: [studentId], references: [id], onDelete: Cascade)
+  school        School @relation(fields: [schoolId], references: [id])
+  goals         IEPGoal[]
+  services      IEPService[]
+  teamMembers   IEPTeamMember[]
+  meetings      IEPMeeting[]
+  behaviorPlan  BehaviorInterventionPlan?
+
+  @@map("ieps")
+}
+
+model IEPGoal {
+  id                    String    @id @default(cuid())
+  iepId                 String
+  domain                String    // Goal domain
+  subject               String?   // Subject enum
+  description           String
+  measurableAnnualGoal  String
+  specific              String
+  measurable            Json      // Measurable criteria
+  achievable            Boolean   @default(true)
+  relevant              String
+  timeBound             String
+  objectives            Json      // Array of objectives
+  progressReporting     Json      // Progress reporting details
+  progress              Json      // Array of progress reports
+  status                String    @default("active")
+  masteryDate           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relationships
+  iep                   IEP @relation(fields: [iepId], references: [id], onDelete: Cascade)
+
+  @@map("iep_goals")
+}
+
+model IEPService {
+  id            String    @id @default(cuid())
+  iepId         String
+  type          String    // ServiceType enum
+  description   String
+  frequency     Json      // Service frequency
+  duration      Json      // Service duration
+  location      String
+  locationDetails String?
+  provider      Json      // Service provider information
+  startDate     DateTime
+  endDate       DateTime
+  progressNotes Json      // Array of progress notes
+  status        String    @default("active")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships
+  iep           IEP @relation(fields: [iepId], references: [id], onDelete: Cascade)
+
+  @@map("iep_services")
+}
+
+model IEPTeamMember {
+  id                String    @id @default(cuid())
+  iepId             String
+  userId            String?
+  name              String
+  role              String    // UserRole or other role
+  title             String
+  qualifications    String[]
+  relationship      String?
+  participationType String
+  attended          Boolean   @default(false)
+  signedDate        DateTime?
+  comments          String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  iep               IEP @relation(fields: [iepId], references: [id], onDelete: Cascade)
+  user              User? @relation(fields: [userId], references: [id])
+
+  @@map("iep_team_members")
+}
+
+model IEPMeeting {
+  id              String    @id @default(cuid())
+  iepId           String
+  type            String    // Meeting type
+  scheduledDate   DateTime
+  actualDate      DateTime?
+  duration        Int?      // minutes
+  location        String
+  method          String    // in_person, virtual, hybrid
+  attendees       Json      // Array of attendee information
+  agenda          String[]
+  discussionPoints String[]
+  decisions       Json      // Array of decisions
+  parentNotification Json   // Array of notification records
+  parentRights    Json      // Parent rights information
+  minutes         String?
+  followUpActions Json      // Array of follow-up actions
+  nextMeetingDate DateTime?
+  nextMeetingType String?
+  createdBy       String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  iep             IEP @relation(fields: [iepId], references: [id], onDelete: Cascade)
+
+  @@map("iep_meetings")
+}
+
+model BehaviorInterventionPlan {
+  id                String    @id @default(cuid())
+  iepId             String    @unique
+  targetBehaviors   Json      // Array of target behaviors
+  replacementBehaviors Json   // Array of replacement behaviors
+  interventions     Json      // Intervention strategies
+  crisisProcedures  Json?     // Crisis procedures
+  dataCollection    Json      // Data collection methods
+  progressData      Json      // Array of progress data
+  reviewDate        DateTime
+  effectiveDate     DateTime
+  lastReviewDate    DateTime?
+  createdBy         String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  iep               IEP @relation(fields: [iepId], references: [id], onDelete: Cascade)
+
+  @@map("behavior_intervention_plans")
+}
+
+// ================================
+// SUBSCRIPTION MODELS
+// ================================
+
+model SubscriptionPlan {
+  id              String    @id @default(cuid())
+  name            String
+  tier            String    // SubscriptionTier enum
+  description     String
+  features        Json      // FeatureSet object
+  pricing         Json      // Array of regional pricing
+  trialDays       Int?
+  trialFeatures   Json?     // Trial FeatureSet
+  isActive        Boolean   @default(true)
+  availableRegions String[] // Array of regions
+  targetCustomers String[]  // Array of customer types
+  contractTerms   Json?     // Contract terms
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  subscriptions   Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id                String    @id @default(cuid())
+  tenantId          String
+  planId            String
+  customerId        String    // School, District, or Individual ID
+  status            String    @default("active") // SubscriptionStatus enum
+  billingCycle      String    // BillingCycle enum
+  currency          String
+  amount            Int       // in cents
+  startDate         DateTime
+  endDate           DateTime?
+  trialStart        DateTime?
+  trialEnd          DateTime?
+  canceledAt        DateTime?
+  cancelationReason String?
+  currentPeriodStart DateTime
+  currentPeriodEnd  DateTime
+  currentUsage      Json      // Usage statistics
+  nextBillingDate   DateTime?
+  lastBillingDate   DateTime?
+  discount          Json?     // Discount information
+  addOns            Json      // Array of add-ons
+  contract          Json?     // Contract information
+  metadata          Json?
+  createdBy         String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  tenant            Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan              SubscriptionPlan @relation(fields: [planId], references: [id])
+  invoices          Invoice[]
+  usageRecords      UsageRecord[]
+
+  @@map("subscriptions")
+}
+
+model Invoice {
+  id              String    @id @default(cuid())
+  subscriptionId  String
+  customerId      String
+  invoiceNumber   String    @unique
+  status          String    // PaymentStatus enum
+  currency        String
+  subtotal        Int       // in cents
+  taxAmount       Int
+  discountAmount  Int
+  total           Int
+  amountDue       Int
+  amountPaid      Int
+  items           Json      // Array of line items
+  invoiceDate     DateTime
+  dueDate         DateTime
+  paidAt          DateTime?
+  paymentMethod   Json?     // Payment method information
+  billingAddress  Json      // Billing address
+  taxId           String?
+  taxExempt       Boolean   @default(false)
+  collectionMethod String   @default("charge_automatically")
+  daysOverdue     Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+model UsageRecord {
+  id              String    @id @default(cuid())
+  subscriptionId  String
+  customerId      String
+  metric          String    // Usage metric type
+  quantity        Float
+  unit            String
+  recordedAt      DateTime
+  periodStart     DateTime
+  periodEnd       DateTime
+  billable        Boolean   @default(true)
+  unitPrice       Float?
+  totalCost       Float?
+  source          String    @default("automatic")
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+
+  // Relationships
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("usage_records")
+}
+
+// Note: Indexes are defined within each model block above for better organization

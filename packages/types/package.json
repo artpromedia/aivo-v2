@@ -1,0 +1,48 @@
+{
+  "name": "@aivo/types",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./user": {
+      "types": "./dist/user.d.ts",
+      "import": "./dist/user.js"
+    },
+    "./assessment": {
+      "types": "./dist/assessment.d.ts",
+      "import": "./dist/assessment.js"
+    },
+    "./curriculum": {
+      "types": "./dist/curriculum.d.ts",
+      "import": "./dist/curriculum.js"
+    },
+    "./ai": {
+      "types": "./dist/ai.d.ts",
+      "import": "./dist/ai.js"
+    },
+    "./iep": {
+      "types": "./dist/iep.d.ts",
+      "import": "./dist/iep.js"
+    },
+    "./subscription": {
+      "types": "./dist/subscription.d.ts",
+      "import": "./dist/subscription.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rimraf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {}
+}
