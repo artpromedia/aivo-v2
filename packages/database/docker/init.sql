@@ -1,7 +1,8 @@
--- Database initialization script for Docker
+-- PostgreSQL Database Initialization Script for Docker
 -- This script runs when the PostgreSQL container starts for the first time
+-- NOTE: This file contains PostgreSQL-specific syntax and should NOT be validated with MSSQL tools
 
--- Enable required extensions
+-- Enable required PostgreSQL extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 CREATE EXTENSION IF NOT EXISTS "btree_gin";
