@@ -10,9 +10,39 @@ import { logger } from '../config/logger.js';
 
 interface WSMessage {
   type: string;
-  data: any;
+  data: Record<string, unknown>;
   timestamp: string;
   clientId?: string;
+}
+
+interface FocusEventData {
+  sessionId: string;
+  attentionScore: number;
+  distractionType?: string;
+  timestamp: Date;
+}
+
+interface GameUpdateData {
+  sessionId: string;
+  gameId: string;
+  progress: number;
+  score: number;
+  currentLevel?: number;
+}
+
+interface HomeworkProgressData {
+  sessionId: string;
+  stepId: string;
+  completed: boolean;
+  hintsUsed?: number;
+  timeSpent?: number;
+}
+
+interface WritingUpdateData {
+  documentId: string;
+  content: string;
+  cursorPosition: number;
+  collaboratorId: string;
 }
 
 interface ClientConnection {
@@ -113,21 +143,30 @@ class WebSocketManager {
   /**
    * Handle client joining a session
    */
-  private handleJoinSession(clientId: string, data: any) {
+  private handleJoinSession(clientId: string, data: Record<string, unknown>) {
     const connection = this.connections.get(clientId);
     if (!connection) return;
 
     const { sessionId, sessionType, studentId } = data;
     
-    connection.sessionId = sessionId;
-    connection.sessionType = sessionType;
-    connection.studentId = studentId;
+    // Type checking for unknown values
+    if (typeof sessionId === 'string') {
+      connection.sessionId = sessionId;
+    }
+    if (typeof sessionType === 'string' && ['focus', 'game', 'homework', 'writing'].includes(sessionType)) {
+      connection.sessionType = sessionType as 'focus' | 'game' | 'homework' | 'writing';
+    }
+    if (typeof studentId === 'string') {
+      connection.studentId = studentId;
+    }
 
     // Add to session connections
-    if (!this.sessionConnections.has(sessionId)) {
-      this.sessionConnections.set(sessionId, new Set());
+    if (typeof sessionId === 'string') {
+      if (!this.sessionConnections.has(sessionId)) {
+        this.sessionConnections.set(sessionId, new Set());
+      }
+      this.sessionConnections.get(sessionId)!.add(clientId);
     }
-    this.sessionConnections.get(sessionId)!.add(clientId);
 
     logger.info({ clientId, sessionId, sessionType, studentId }, 'Client joined session');
 
@@ -138,16 +177,18 @@ class WebSocketManager {
     });
 
     // Notify other session participants (for collaborative features)
-    this.broadcastToSession(sessionId, {
-      type: 'participant_joined',
-      data: { clientId, studentId, sessionType, timestamp: new Date().toISOString() }
-    }, [clientId]);
+    if (typeof sessionId === 'string') {
+      this.broadcastToSession(sessionId, {
+        type: 'participant_joined',
+        data: { clientId, studentId, sessionType, timestamp: new Date().toISOString() }
+      }, [clientId]);
+    }
   }
 
   /**
    * Handle client leaving a session
    */
-  private handleLeaveSession(clientId: string, _data: any) {
+  private handleLeaveSession(clientId: string, _data: Record<string, unknown>) {
     const connection = this.connections.get(clientId);
     if (!connection || !connection.sessionId) return;
 
@@ -177,7 +218,7 @@ class WebSocketManager {
   /**
    * Handle focus monitoring events
    */
-  private handleFocusEvent(clientId: string, data: any) {
+  private handleFocusEvent(clientId: string, data: Record<string, unknown>) {
     const connection = this.connections.get(clientId);
     if (!connection || connection.sessionType !== 'focus') return;
 
@@ -217,7 +258,7 @@ class WebSocketManager {
   /**
    * Handle game state updates
    */
-  private handleGameUpdate(clientId: string, data: any) {
+  private handleGameUpdate(clientId: string, data: Record<string, unknown>) {
     const connection = this.connections.get(clientId);
     if (!connection || connection.sessionType !== 'game') return;
 
@@ -254,7 +295,7 @@ class WebSocketManager {
   /**
    * Handle homework progress updates
    */
-  private handleHomeworkProgress(clientId: string, data: any) {
+  private handleHomeworkProgress(clientId: string, data: Record<string, unknown>) {
     const connection = this.connections.get(clientId);
     if (!connection || connection.sessionType !== 'homework') return;
 
@@ -293,7 +334,7 @@ class WebSocketManager {
   /**
    * Handle writing document updates
    */
-  private handleWritingUpdate(clientId: string, data: any) {
+  private handleWritingUpdate(clientId: string, data: Record<string, unknown>) {
     const connection = this.connections.get(clientId);
     if (!connection || connection.sessionType !== 'writing') return;
 
@@ -369,7 +410,7 @@ class WebSocketManager {
   /**
    * Send message to specific client
    */
-  private sendMessage(clientId: string, message: { type: string; data: any }) {
+  private sendMessage(clientId: string, message: { type: string; data: Record<string, unknown> }) {
     const connection = this.connections.get(clientId);
     if (!connection) return;
 
@@ -399,7 +440,7 @@ class WebSocketManager {
   /**
    * Broadcast message to all clients in a session
    */
-  private broadcastToSession(sessionId: string, message: { type: string; data: any }, excludeClients: string[] = []) {
+  private broadcastToSession(sessionId: string, message: { type: string; data: Record<string, unknown> }, excludeClients: string[] = []) {
     const sessionClients = this.sessionConnections.get(sessionId);
     if (!sessionClients) return;
 
@@ -413,7 +454,7 @@ class WebSocketManager {
   /**
    * Broadcast message to all connected clients
    */
-  broadcastToAll(message: { type: string; data: any }, excludeClients: string[] = []) {
+  broadcastToAll(message: { type: string; data: Record<string, unknown> }, excludeClients: string[] = []) {
     for (const clientId of this.connections.keys()) {
       if (!excludeClients.includes(clientId)) {
         this.sendMessage(clientId, message);
@@ -424,7 +465,7 @@ class WebSocketManager {
   /**
    * Send intervention notification
    */
-  sendInterventionNotification(sessionId: string, intervention: any) {
+  sendInterventionNotification(sessionId: string, intervention: Record<string, unknown>) {
     this.broadcastToSession(sessionId, {
       type: 'intervention_triggered',
       data: {
@@ -437,7 +478,7 @@ class WebSocketManager {
   /**
    * Send focus alert to monitoring dashboard
    */
-  sendFocusAlert(sessionId: string, alert: any) {
+  sendFocusAlert(sessionId: string, alert: Record<string, unknown>) {
     this.broadcastToSession(sessionId, {
       type: 'focus_alert',
       data: {

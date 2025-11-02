@@ -92,11 +92,12 @@ app.get('/health', async (c) => {
     };
 
     return c.json(health);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error({ err: error }, 'Health check failed');
     return c.json({
       status: 'unhealthy',
-      error: error.message,
+      error: errorMessage,
     }, 500);
   }
 });
@@ -135,11 +136,12 @@ app.get('/health/detailed', async (c) => {
 
     const statusCode = overallStatus === 'healthy' ? 200 : 503;
     return c.json(health, statusCode);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error({ err: error }, 'Detailed health check failed');
     return c.json({
       status: 'unhealthy',
-      error: error.message,
+      error: errorMessage,
     }, 500);
   }
 });
@@ -307,7 +309,7 @@ async function initializeApp() {
     await initializeSupabase();
 
     logger.info('All services initialized successfully');
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error }, 'Failed to initialize application');
     throw error;
   }
@@ -330,7 +332,7 @@ async function gracefulShutdown(signal: string) {
     
     logger.info('Graceful shutdown completed');
     process.exit(0);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error }, 'Error during graceful shutdown');
     process.exit(1);
   }
@@ -373,7 +375,7 @@ async function startServer() {
       gracefulShutdown('unhandledRejection');
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error }, 'Failed to start server');
     process.exit(1);
   }

@@ -142,11 +142,12 @@ writingRoutes.post(
       }, 201);
       
     } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ err: error }, 'Failed to create writing document');
       return c.json({
         success: false,
         error: 'Failed to create document',
-        message: error.message
+        message: errorMessage
       }, 500);
     }
   }
