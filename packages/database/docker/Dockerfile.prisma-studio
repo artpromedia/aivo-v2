@@ -1,0 +1,20 @@
+# Dockerfile for running Prisma Studio in Docker
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install Prisma CLI
+RUN npm install -g prisma
+
+# Copy package files
+COPY package.json ./
+COPY prisma/ ./prisma/
+
+# Install dependencies
+RUN npm install
+
+# Expose Prisma Studio port
+EXPOSE 5555
+
+# Generate Prisma client and start studio
+CMD ["sh", "-c", "npx prisma generate && npx prisma studio --hostname 0.0.0.0 --port 5555"]

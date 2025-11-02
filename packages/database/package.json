@@ -24,13 +24,29 @@
     "dev": "tsc --watch",
     "clean": "rimraf dist",
     "typecheck": "tsc --noEmit",
+    
     "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
     "db:push": "prisma db push",
+    "db:pull": "prisma db pull",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:create": "prisma migrate dev --create-only",
     "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:status": "prisma migrate status",
+    "db:migrate:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force"
+    "db:reset": "prisma migrate reset --force",
+    
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f postgres",
+    "docker:studio": "docker-compose --profile studio up -d",
+    "docker:clean": "docker-compose down -v --remove-orphans",
+    
+    "setup": "pnpm run docker:up; Start-Sleep -Seconds 5; pnpm run db:push; pnpm run db:seed",
+    "setup:local": "pnpm run db:validate; pnpm run db:generate; pnpm run db:push",
+    "dev:reset": "pnpm run db:reset; pnpm run db:seed"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
