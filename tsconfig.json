@@ -18,12 +18,11 @@
         "name": "next"
       }
     ],
-    "baseUrl": ".",
     "paths": {
       "@aivo/*": ["./packages/*/src"],
       "@apps/*": ["./apps/*/src"]
     },
-    "types": ["node", "jest", "@testing-library/jest-dom"]
+    "types": ["node"]
   },
   "include": [
     "**/*.ts",

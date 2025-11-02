@@ -133,7 +133,7 @@ export abstract class BaseAIProvider extends EventEmitter implements AIProviderI
         {
           retries: (request.options?.retries ?? this.config.retries) as number,
           onFailedAttempt: (error) => {
-            console.warn(`Attempt ${error.attemptNumber} failed for provider ${this.provider}:`, error.message);
+            console.warn(`Attempt ${error.attemptNumber} failed for provider ${this.provider}:`, (error as any).message || error);
           }
         }
       );

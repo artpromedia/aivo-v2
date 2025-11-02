@@ -53,7 +53,7 @@ export const AIRequestSchema = z.object({
   id: z.string().uuid(),
   taskType: z.nativeEnum(TaskType),
   prompt: z.string().min(1),
-  context: z.record(z.any()).optional(),
+  context: z.record(z.string(), z.any()).optional(),
   options: z.object({
     maxTokens: z.number().positive().optional(),
     temperature: z.number().min(0).max(2).optional(),
@@ -114,7 +114,7 @@ export const ProviderConfigSchema = z.object({
     tokensPerMinute: z.number().positive().optional(),
     concurrent: z.number().positive().default(10)
   }),
-  costs: z.record(z.object({
+  costs: z.record(z.string(), z.object({
     inputTokens: z.number().nonnegative(),
     outputTokens: z.number().nonnegative()
   })),

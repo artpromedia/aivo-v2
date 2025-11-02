@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { createElement } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '../lib/utils';
@@ -123,23 +124,24 @@ const CardTitle = React.forwardRef<
     gradeLevel?: 'k5' | '68' | '912';
   }
 >(({ className, level = 2, gradeLevel, ...props }, ref) => {
-  const Heading = `h${level}` as keyof JSX.IntrinsicElements;
+  const headingTag = `h${level}`;
   
   const gradeTextClass = gradeLevel ? (
     gradeLevel === 'k5' ? 'text-xl' :
     gradeLevel === '68' ? 'text-lg' : 'text-base'
   ) : 'text-2xl';
 
-  return (
-    <Heading
-      ref={ref}
-      className={cn(
+  return createElement(
+    headingTag,
+    {
+      ref,
+      className: cn(
         gradeTextClass,
         'font-semibold leading-none tracking-tight',
         className
-      )}
-      {...props}
-    />
+      ),
+      ...props
+    }
   );
 });
 

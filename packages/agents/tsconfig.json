@@ -19,11 +19,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "baseUrl": "./",
-    "paths": {
-      "@aivo/*": ["../*/src"]
-    }
+    "moduleResolution": "node"
   },
   "include": [
     "src/**/*"

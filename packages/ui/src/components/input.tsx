@@ -47,7 +47,7 @@ const inputVariants = cva(
 );
 
 export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement>,
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
     VariantProps<typeof inputVariants> {
   /** Grade level for automatic sizing */
   gradeLevel?: 'k5' | '68' | '912';
@@ -155,7 +155,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               rightIcon && 'pr-10',
               className
             )}
-            aria-invalid={hasError}
+            aria-invalid={hasError ? 'true' : 'false'}
             aria-describedby={cn(
               hasError && errorId,
               hasHelper && helperTextId
@@ -292,7 +292,7 @@ const Textarea = React.forwardRef<
             'min-h-[80px]',
             className
           )}
-          aria-invalid={hasError}
+          aria-invalid={hasError ? 'true' : 'false'}
           aria-describedby={cn(
             hasError && errorId,
             hasHelper && helperTextId

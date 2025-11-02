@@ -9,6 +9,7 @@
     "sourceMap": true,
     "lib": ["DOM", "DOM.Iterable", "ES6"],
     "skipLibCheck": true,
+
     "types": []
   },
   "include": [

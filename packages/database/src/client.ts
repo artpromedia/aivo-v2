@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, type Prisma } from '@prisma/client';
 
 // Global database connection
 declare global {
@@ -32,12 +32,12 @@ export async function testConnection(): Promise<boolean> {
 }
 
 // Multi-tenant query helpers
-export function withTenant<T>(tenantId: string, query: (prisma: PrismaClient) => Promise<T>): Promise<T> {
+export function withTenant<T>(tenantId: string, query: (prisma: Prisma.TransactionClient) => Promise<T>): Promise<T> {
   // Add row-level security context
-  return prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // Set tenant context for RLS
     await tx.$executeRaw`SET app.current_tenant_id = ${tenantId}`;
-    return query(tx as PrismaClient);
+    return query(tx);
   });
 }
 
@@ -69,7 +69,7 @@ export async function bulkCreate<T>(
   return results;
 }
 
-export { PrismaClient } from '@prisma/client';
+export { PrismaClient, Prisma } from '@prisma/client';
 export type { 
   User, 
   Tenant,

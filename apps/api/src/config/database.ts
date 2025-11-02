@@ -1,4 +1,4 @@
-import { PrismaClient } from '@aivo/database';
+import { PrismaClient, type Prisma } from '@aivo/database';
 import { logger, dbLogger } from './logger.js';
 import { env } from './env.js';
 
@@ -153,7 +153,7 @@ export async function withTransaction<T>(
   dbLogger.debug({ transactionId }, 'Starting database transaction');
   
   try {
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Add transaction logging to the transaction client
       const txLogger = dbLogger.child({ transactionId });
       
