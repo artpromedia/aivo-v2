@@ -1,5 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Aivo Platform - Comprehensive Prisma Schema
+// Comprehensive schema for special education AI platform
+// Includes: Multi-tenancy, IEP management, AI models, Phase 1 features
 
 generator client {
   provider = "prisma-client-js"
@@ -19,40 +20,45 @@ model Tenant {
   name        String
   slug        String   @unique
   domain      String?  @unique
-  region      String   // Region enum
+  region      String   // Region: US, CA, UK, AU, etc.
   timezone    String   @default("UTC")
+  settings    Json?    // Tenant-specific settings
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   deletedAt   DateTime?
 
   // Relationships
-  districts   District[]
-  schools     School[]
-  users       User[]
+  districts     District[]
+  schools       School[]
+  users         User[]
   subscriptions Subscription[]
 
+  // Multi-tenant isolation indexes
+  @@index([slug])
+  @@index([domain])
   @@map("tenants")
 }
 
 model District {
-  id        String    @id @default(cuid())
-  tenantId  String
-  name      String
-  code      String?   @unique
-  address   Json?     // Address object
-  contactInfo Json?   // Contact information
-  settings  Json?     // District-specific settings
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  id          String    @id @default(cuid())
+  tenantId    String
+  name        String
+  code        String?   @unique
+  address     Json?     // Address object
+  contactInfo Json?     // Contact information
+  settings    Json?     // District-specific settings
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   // Relationships
-  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  schools   School[]
-  users     User[]
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  schools     School[]
+  users       User[]
 
+  @@index([tenantId])
   @@map("districts")
 }
 
@@ -62,7 +68,7 @@ model School {
   districtId  String?
   name        String
   code        String?   @unique
-  type        String    // elementary, middle, high, k12, etc.
+  type        String    // elementary, middle, high, k12
   address     Json?     // Address object
   contactInfo Json?     // Contact information
   settings    Json?     // School-specific settings
@@ -72,13 +78,15 @@ model School {
   deletedAt   DateTime?
 
   // Relationships
-  tenant      Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  district    District?  @relation(fields: [districtId], references: [id])
-  users       User[]
-  classrooms  Classroom[]
-  ieps        IEP[]
-  assessments Assessment[]
+  tenant        Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  district      District?  @relation(fields: [districtId], references: [id])
+  users         User[]
+  classrooms    Classroom[]
+  ieps          IEP[]
+  assessments   Assessment[]
 
+  @@index([tenantId])
+  @@index([districtId])
   @@map("schools")
 }
 
@@ -86,8 +94,8 @@ model Classroom {
   id          String    @id @default(cuid())
   schoolId    String
   name        String
-  gradeLevel  String    // GradeLevel enum
-  subject     String?   // Subject enum
+  gradeLevel  String    // K, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+  subject     String?   // math, english, science, social_studies
   capacity    Int       @default(30)
   settings    Json?     // Classroom-specific settings
   isActive    Boolean   @default(true)
@@ -100,8 +108,11 @@ model Classroom {
   teachers    User[] @relation("ClassroomTeachers")
   students    User[] @relation("ClassroomStudents")
 
+  @@index([schoolId, gradeLevel])
   @@map("classrooms")
 }
+
+
 
 // ================================
 // USER MANAGEMENT MODELS
@@ -116,52 +127,69 @@ model User {
   lastName      String
   displayName   String?
   avatar        String?
-  role          String    // UserRole enum
-  status        String    @default("active") // Status enum
+  role          String    // learner, parent, teacher, district_admin, platform_admin
+  status        String    @default("active") // active, inactive, suspended
   lastLoginAt   DateTime?
-  passwordHash  String?
   emailVerified Boolean   @default(false)
   phoneVerified Boolean   @default(false)
+  
+  // MFA settings
+  mfaEnabled    Boolean   @default(false)
+  mfaSecret     String?   // TOTP secret
+  backupCodes   String[]  // Encrypted backup codes
+  
+  // Profile information
+  dateOfBirth   DateTime?
+  grade         String?   // For students: K, 1, 2, ..., 12
+  disabilities  Json?     // Array of disability classifications
+  
+  // IEP and special needs
+  hasIEP        Boolean   @default(false)
+  has504Plan    Boolean   @default(false)
+  
+  // Learning preferences and accessibility
+  learningStyle Json?     // visual, auditory, kinesthetic preferences
+  accessibility Json?     // accessibility settings and accommodations
+  
+  // Focus baseline metrics (for students)
+  focusBaseline Json?     // Baseline attention and focus metrics
+  
+  // Audit fields
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
+  deletedAt     DateTime? // Soft delete support
 
-  // Role-specific fields (JSON for flexibility)
-  roleData      Json?     // Store role-specific data
-
-  // Relationships
-  tenant        Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  // Organizational relationships
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   district      District? @relation(fields: [districtId], references: [id])
-  school        School? @relation(fields: [schoolId], references: [id])
-
-  // Multi-role relationships
+  school        School?   @relation(fields: [schoolId], references: [id])
   districtId    String?
   schoolId      String?
   
-  // Student relationships
-  teacherClassrooms  Classroom[] @relation("ClassroomTeachers")
-  studentClassrooms  Classroom[] @relation("ClassroomStudents")
-  parentRelations    ParentStudentRelation[] @relation("ParentUser")
-  childRelations     ParentStudentRelation[] @relation("StudentUser")
+  // Multi-role relationships
+  teacherClassrooms     Classroom[] @relation("ClassroomTeachers")
+  studentClassrooms     Classroom[] @relation("ClassroomStudents")
+  parentRelations       ParentStudentRelation[] @relation("ParentUser")
+  childRelations        ParentStudentRelation[] @relation("StudentUser")
   
   // IEP relationships
-  studentIEPs        IEP[] @relation("StudentIEP")
-  teamMemberIEPs     IEPTeamMember[]
+  studentIEPs           IEP[] @relation("StudentIEP")
+  teamMemberIEPs        IEPTeamMember[]
   
   // Assessment relationships
-  createdAssessments Assessment[] @relation("AssessmentCreator")
-  assignedAssessments AssessmentAssignment[]
-  assessmentAttempts AssessmentAttempt[]
+  createdAssessments    Assessment[] @relation("AssessmentCreator")
+  assignedAssessments   AssessmentAssignment[]
+  assessmentAttempts    AssessmentAttempt[]
   
   // AI relationships
-  personalAIModel    PersonalAIModel?
-  aiConversations    AIConversation[]
+  personalAIModel       PersonalAIModel?
+  aiConversations       AIConversation[]
   
   // Session management
-  sessions          UserSession[]
+  sessions              UserSession[]
   
   // Audit and consent
-  consentRecords    ConsentRecord[]
+  consentRecords        ConsentRecord[]
   
   // Phase 1 Features relationships
   // Focus Guardian
@@ -180,7 +208,15 @@ model User {
   writingDocumentsAsStudent WritingDocument[] @relation("WritingDocumentStudent")
   writingDocumentsAsTeacher WritingDocument[] @relation("WritingDocumentTeacher")
   writingComments           WritingComment[] @relation("WritingCommentAuthor")
+  
+  // Analytics and reporting
+  studentProfile            StudentProfile?
+  dailyFocusSummaries       DailyFocusSummary[]
+  weeklyProgressReports     WeeklyProgressReport[]
 
+  @@index([tenantId, role])
+  @@index([email])
+  @@index([role, status])
   @@map("users")
 }
 
@@ -1426,4 +1462,169 @@ model WritingPrompt {
   @@map("writing_prompts")
 }
 
-// Note: Indexes are defined within each model block above for better organization
+// ================================
+// ANALYTICS & REPORTING MODELS
+// ================================
+
+model DailyFocusSummary {
+  id                String    @id @default(cuid())
+  studentId         String
+  date              DateTime  // Date for this summary
+  
+  // Focus metrics
+  totalFocusTime    Int       // Total focus time in minutes
+  averageFocusScore Float     // Average focus score (0-100)
+  distractionCount  Int       // Total distractions
+  breakCount        Int       // Total breaks taken
+  
+  // Subject breakdown
+  subjectBreakdown  Json      // Focus metrics by subject
+  
+  // Time patterns
+  bestFocusHour     Int?      // Hour of day with best focus (0-23)
+  worstFocusHour    Int?      // Hour of day with worst focus (0-23)
+  
+  // Intervention effectiveness
+  interventionCount Int       // Number of interventions
+  gameBreakCount    Int       // Number of game breaks
+  interventionEffect Float?   // Effectiveness score (0-1)
+  
+  // Recommendations
+  recommendations   String[]  // AI-generated recommendations
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  student           User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, date])
+  @@index([date])
+  @@map("daily_focus_summaries")
+}
+
+model WeeklyProgressReport {
+  id                    String    @id @default(cuid())
+  studentId             String
+  weekStart             DateTime  // Start of the week
+  weekEnd               DateTime  // End of the week
+  
+  // Academic progress
+  homeworkCompletion    Float     // Completion rate (0-1)
+  averageScore          Float?    // Average homework/assessment score
+  improvementAreas      String[]  // Areas needing improvement
+  strengths             String[]  // Areas of strength
+  
+  // Focus progress
+  focusImprovement      Float?    // Week-over-week focus improvement
+  attentionSpanGrowth   Float?    // Attention span growth in minutes
+  distractionReduction  Float?    // Reduction in distractions (percentage)
+  
+  // Engagement metrics
+  gameEngagement        Float?    // Game engagement score (0-1)
+  writingProductivity   Float?    // Writing productivity score
+  sessionConsistency    Float?    // Consistency in session attendance
+  
+  // IEP goal progress (if applicable)
+  iepGoalProgress       Json?     // Progress on IEP goals
+  accommodationUsage    Json?     // Usage of accommodations
+  
+  // Parent/teacher notes
+  teacherNotes          String?
+  parentNotes           String?
+  
+  // AI insights
+  aiInsights            Json      // AI-generated insights and trends
+  recommendations       String[]  // Recommendations for next week
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relationships
+  student               User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, weekStart])
+  @@index([weekStart, weekEnd])
+  @@map("weekly_progress_reports")
+}
+
+model StudentProfile {
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  
+  // Demographics
+  gradeLevel            String    // Current grade level
+  ageGroup              String    // K-5, 6-8, 9-12
+  
+  // Curriculum and academic
+  currentCurriculum     String?   // Curriculum framework
+  primaryLanguage       String    @default("en")
+  secondaryLanguages    String[]
+  
+  // Disability and special needs
+  disabilityTypes       String[]  // Array of disability classifications
+  iepActive             Boolean   @default(false)
+  plan504Active         Boolean   @default(false)
+  
+  // IEP data storage
+  iepGoals              Json?     // Current IEP goals
+  accommodations        Json?     // Required accommodations
+  modifications         Json?     // Required modifications
+  servicesRequired      Json?     // Required services
+  
+  // Learning preferences
+  learningStyle         Json      // Learning style preferences
+  processingSpeed       String?   // slow, average, fast
+  workingMemory         String?   // low, average, high
+  attentionSpan         Int?      // Baseline attention span in minutes
+  
+  // Accessibility settings
+  textSize              String    @default("medium") // small, medium, large, extra-large
+  contrast              String    @default("normal") // normal, high
+  audioSupport          Boolean   @default(false)
+  visualSupport         Boolean   @default(false)
+  motorSupport          Boolean   @default(false)
+  
+  // Focus baseline metrics
+  baselineFocusScore    Float?    // Initial focus assessment score
+  optimalSessionLength  Int?      // Optimal learning session length in minutes
+  preferredBreakLength  Int?      // Preferred break length in minutes
+  
+  // Behavioral patterns
+  bestFocusTimes        Json?     // Time periods when student focuses best
+  commonDistractions    String[]  // Common distraction types
+  motivators            String[]  // Things that motivate the student
+  
+  // Technology preferences
+  preferredInputMethod  String    @default("keyboard") // keyboard, voice, touch
+  assistiveTechnology   Json?     // Required assistive technology
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relationships
+  user                  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([gradeLevel, ageGroup])
+  @@index([disabilityTypes])
+  @@map("student_profiles")
+}
+
+// Add the missing relationship to User model for student profiles
+// This would need to be added to the User model:
+// studentProfile        StudentProfile?
+// dailyFocusSummaries   DailyFocusSummary[]
+// weeklyProgressReports WeeklyProgressReport[]
+
+// ================================
+// COMPOUND INDEXES FOR OPTIMIZATION
+// ================================
+
+// Note: Additional compound indexes for query optimization are defined
+// within each model block above for better organization and maintenance.
+// Common query patterns covered:
+// - Multi-tenant isolation (tenantId indexes)
+// - Time-based queries (date/timestamp indexes)  
+// - Student-centric queries (studentId + date/subject)
+// - Status and type filtering
+// - Hierarchical relationships (school -> district -> tenant)
