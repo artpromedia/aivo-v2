@@ -8,6 +8,26 @@
     "pnpm": ">=9.0.0"
   },
   "packageManager": "pnpm@9.14.4",
+  "pnpm": {
+    "overrides": {
+      "@stripe/react-stripe-js>react": "^19.0.0",
+      "@stripe/react-stripe-js>react-dom": "^19.0.0",
+      "@storybook/react-vite>vite": "^7.0.0",
+      "@storybook/builder-vite>vite": "^7.0.0",
+      "@joshwooding/vite-plugin-react-docgen-typescript>vite": "^7.0.0",
+      "vite": "npm:rolldown-vite@7.1.14"
+    },
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "vite"
+      ],
+      "allowedVersions": {
+        "react": "19",
+        "react-dom": "19",
+        "vite": "7"
+      }
+    }
+  },
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
