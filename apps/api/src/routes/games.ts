@@ -168,12 +168,13 @@ gamesRoutes.post(
         message: 'Game generated successfully'
       }, 201);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ err: error }, 'Failed to generate game');
       return c.json({
         success: false,
         error: 'Failed to generate game',
-        message: error.message
+        message: errorMessage
       }, 500);
     }
   }
@@ -212,7 +213,7 @@ gamesRoutes.get('/games/:gameId', async (c) => {
       data: game
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, gameId: c.req.param('gameId') }, 'Failed to get game');
     return c.json({
       success: false,
@@ -251,7 +252,7 @@ gamesRoutes.put(
         data: updatedState
       });
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error, gameId: c.req.param('gameId') }, 'Failed to update game state');
       return c.json({
         success: false,
@@ -323,7 +324,7 @@ gamesRoutes.post('/games/:gameId/complete', async (c) => {
       message: 'Game completed successfully'
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, gameId: c.req.param('gameId') }, 'Failed to complete game');
     return c.json({
       success: false,
@@ -391,7 +392,7 @@ gamesRoutes.get('/templates', async (c) => {
       }
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error }, 'Failed to get game templates');
     return c.json({
       success: false,
@@ -449,7 +450,7 @@ gamesRoutes.get('/student/:studentId/history', async (c) => {
       data: history
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, studentId: c.req.param('studentId') }, 'Failed to get game history');
     return c.json({
       success: false,
@@ -510,7 +511,7 @@ gamesRoutes.get('/analytics', async (c) => {
       data: analytics
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error }, 'Failed to get game analytics');
     return c.json({
       success: false,

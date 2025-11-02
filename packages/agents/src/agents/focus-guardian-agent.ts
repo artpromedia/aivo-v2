@@ -1,5 +1,5 @@
 import { BaseAgent } from './base-agent';
-import type { FocusEvent, FocusMetrics, InterventionStrategy, FocusSession } from '../types/focus-types';
+import type { FocusEvent, FocusMetrics, InterventionStrategy, FocusSession, Intervention } from '../types/focus-types';
 
 import type { AgentConfig, AgentContext } from '../types';
 import { AgentType } from '../types';
@@ -654,8 +654,8 @@ export class FocusGuardianAgent extends BaseAgent {
     // Count different types of events and interventions
     const distractionCount = focusEvents.filter((e: FocusEvent) => e.type === 'distraction-detected').length;
     const interventionCount = interventions.length;
-    const gameBreakCount = interventions.filter((i: any) => i.type === 'game-break').length;
-    const subjectSwitchCount = interventions.filter((i: any) => i.type === 'subject-switch').length;
+    const gameBreakCount = interventions.filter((i: Intervention) => i.type === 'game-break').length;
+    const subjectSwitchCount = interventions.filter((i: Intervention) => i.type === 'subject-switch').length;
 
     // Calculate optimal learning time percentage
     const optimalLearningTimePercentage = this.calculateOptimalTimePercentage(session.startTime, duration);

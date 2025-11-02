@@ -19,7 +19,8 @@ import type {
   GameAnalytics,
   MathProblem,
   GameQuestion,
-  ConceptNode} from '../types/game-types';
+  ConceptNode,
+  PlayerResponse} from '../types/game-types';
 import {
   K5_GAME_TEMPLATES,
   MIDDLE_GAME_TEMPLATES,
@@ -120,8 +121,6 @@ export class GameGenerationAgent extends BaseAgent {
   }
 
   protected validateConfig(): boolean {
-    const _config = this.config.customSettings || {};
-    
     // Basic validation - we'll provide defaults if missing
     return true;
   }
@@ -510,7 +509,7 @@ export class GameGenerationAgent extends BaseAgent {
   }
 
   // Response parsers
-  private parseVocabularyResponse(response: any): string[] {
+  private parseVocabularyResponse(response: unknown): string[] {
     try {
       if (typeof response === 'string') {
         const parsed = JSON.parse(response);
@@ -523,7 +522,7 @@ export class GameGenerationAgent extends BaseAgent {
     }
   }
 
-  private parseMathResponse(response: any, template: GameTemplate): MathProblem[] {
+  private parseMathResponse(response: unknown, template: GameTemplate): MathProblem[] {
     try {
       const parsed = typeof response === 'string' ? JSON.parse(response) : response;
       return Array.isArray(parsed) ? parsed.map((item, index) => ({
@@ -539,7 +538,7 @@ export class GameGenerationAgent extends BaseAgent {
     }
   }
 
-  private parseQuestionResponse(response: any, template: GameTemplate): GameQuestion[] {
+  private parseQuestionResponse(response: unknown, template: GameTemplate): GameQuestion[] {
     try {
       const parsed = typeof response === 'string' ? JSON.parse(response) : response;
       return Array.isArray(parsed) ? parsed.map((item, index) => ({
@@ -559,7 +558,7 @@ export class GameGenerationAgent extends BaseAgent {
     }
   }
 
-  private parseConceptResponse(response: any, template: GameTemplate): ConceptNode[] {
+  private parseConceptResponse(response: unknown, template: GameTemplate): ConceptNode[] {
     try {
       const parsed = typeof response === 'string' ? JSON.parse(response) : response;
       return Array.isArray(parsed) ? parsed.map((item, index) => ({
@@ -772,18 +771,18 @@ export class GameGenerationAgent extends BaseAgent {
     };
   }
 
-  private calculateAverageResponseTime(responses: any[]): number {
+  private calculateAverageResponseTime(responses: PlayerResponse[]): number {
     if (responses.length === 0) return 0;
     const total = responses.reduce((sum, r) => sum + (r.timeToRespond || 0), 0);
     return total / responses.length;
   }
 
-  private calculateAverageStreakLength(responses: any[]): number {
+  private calculateAverageStreakLength(responses: PlayerResponse[]): number {
     // Simplified streak calculation
     return responses.length > 0 ? responses.length / 2 : 0;
   }
 
-  private countStreaks(responses: any[]): number {
+  private countStreaks(responses: PlayerResponse[]): number {
     // Count consecutive correct answer streaks
     let streaks = 0;
     let inStreak = false;
@@ -800,7 +799,7 @@ export class GameGenerationAgent extends BaseAgent {
     return streaks;
   }
 
-  private identifyMasteredConcepts(responses: any[]): string[] {
+  private identifyMasteredConcepts(responses: Array<{ concept?: string; correct: boolean }>): string[] {
     // Identify concepts with high accuracy
     const conceptAccuracy: Record<string, { correct: number; total: number }> = {};
     
@@ -824,7 +823,7 @@ export class GameGenerationAgent extends BaseAgent {
     return game.metadata.educationalContext?.recentTopics || [];
   }
 
-  private identifyImprovementAreas(responses: any[]): string[] {
+  private identifyImprovementAreas(responses: Array<{ concept?: string; correct: boolean }>): string[] {
     // Identify areas with low accuracy
     const conceptAccuracy: Record<string, { correct: number; total: number }> = {};
     
@@ -949,7 +948,7 @@ export class GameGenerationAgent extends BaseAgent {
     console.log('[GameGenerationAgent] Starting analytics collection...');
   }
 
-  private trackGameGeneration(game: GeneratedGame, request: GameGenerationRequest): void {
+  private trackGameGeneration(game: GeneratedGame, _request: GameGenerationRequest): void {
     // Track game generation for analytics
     console.log('[GameGenerationAgent] Tracking game generation:', game.id);
   }
@@ -964,28 +963,29 @@ export class GameGenerationAgent extends BaseAgent {
     });
   }
 
-  private parseGameGeneratorConfig(config: any): GameGeneratorConfig {
+  private parseGameGeneratorConfig(config: unknown): GameGeneratorConfig {
+    const typedConfig = config as Partial<GameGeneratorConfig>;
     return {
-      contentComplexity: config.contentComplexity || {
+      contentComplexity: typedConfig.contentComplexity || {
         k5: 2,
         middle: 4,
         high: 6
       },
-      difficultyProgression: config.difficultyProgression ?? true,
-      adaptiveContent: config.adaptiveContent ?? true,
-      personalizedRecommendations: config.personalizedRecommendations ?? true,
-      curriculumAlignment: config.curriculumAlignment ?? true,
-      recentLessonIntegration: config.recentLessonIntegration ?? true,
-      strugglingAreasBoost: config.strugglingAreasBoost ?? true,
-      maxGamesPerSession: config.maxGamesPerSession || 10,
-      contentCacheSize: config.contentCacheSize || 100,
-      generationTimeout: config.generationTimeout || 30000,
-      contentValidation: config.contentValidation ?? true,
-      appropriatenessCheck: config.appropriatenessCheck ?? true,
-      difficultyCalibration: config.difficultyCalibration ?? true,
-      trackUsage: config.trackUsage ?? true,
-      collectFeedback: config.collectFeedback ?? true,
-      optimizeGeneration: config.optimizeGeneration ?? true
+      difficultyProgression: typedConfig.difficultyProgression ?? true,
+      adaptiveContent: typedConfig.adaptiveContent ?? true,
+      personalizedRecommendations: typedConfig.personalizedRecommendations ?? true,
+      curriculumAlignment: typedConfig.curriculumAlignment ?? true,
+      recentLessonIntegration: typedConfig.recentLessonIntegration ?? true,
+      strugglingAreasBoost: typedConfig.strugglingAreasBoost ?? true,
+      maxGamesPerSession: typedConfig.maxGamesPerSession || 10,
+      contentCacheSize: typedConfig.contentCacheSize || 100,
+      generationTimeout: typedConfig.generationTimeout || 30000,
+      contentValidation: typedConfig.contentValidation ?? true,
+      appropriatenessCheck: typedConfig.appropriatenessCheck ?? true,
+      difficultyCalibration: typedConfig.difficultyCalibration ?? true,
+      trackUsage: typedConfig.trackUsage ?? true,
+      collectFeedback: typedConfig.collectFeedback ?? true,
+      optimizeGeneration: typedConfig.optimizeGeneration ?? true
     };
   }
 }

@@ -219,7 +219,7 @@ export interface PlayerResponse {
   id: string;
   questionId?: string;
   stepNumber: number;
-  response: any;
+  response: string | number | boolean | string[] | number[] | Record<string, unknown>;
   correct: boolean;
   timeToRespond: number; // milliseconds
   hintsUsed: number;
@@ -233,7 +233,7 @@ export interface GameCheckpoint {
   timestamp: Date;
   score: number;
   timeElapsed: number;
-  state: any; // Serializable game state for restore
+  state: Record<string, unknown>; // Serializable game state for restore
 }
 
 export interface GameResults {
@@ -340,9 +340,9 @@ export interface GameAnalytics {
     suggestedImprovements: string[];
   };
   performanceByDemographic: {
-    ageGroup: Record<AgeGroup, any>;
-    learningStyle: Record<string, any>;
-    accessibilityNeeds: Record<string, any>;
+    ageGroup: Record<AgeGroup, Record<string, unknown>>;
+    learningStyle: Record<string, Record<string, unknown>>;
+    accessibilityNeeds: Record<string, Record<string, unknown>>;
   };
 }
 

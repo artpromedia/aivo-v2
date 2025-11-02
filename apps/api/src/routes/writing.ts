@@ -141,7 +141,7 @@ writingRoutes.post(
         message: 'Document created successfully'
       }, 201);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error }, 'Failed to create writing document');
       return c.json({
         success: false,
@@ -198,7 +198,7 @@ writingRoutes.get('/documents/:documentId', async (c) => {
       data: document
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, documentId: c.req.param('documentId') }, 'Failed to get document');
     return c.json({
       success: false,
@@ -244,7 +244,7 @@ writingRoutes.put(
         data: updateResult
       });
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error, documentId: c.req.param('documentId') }, 'Failed to update content');
       return c.json({
         success: false,
@@ -336,7 +336,7 @@ writingRoutes.post(
         data: feedback
       });
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error, documentId: c.req.param('documentId') }, 'Failed to generate feedback');
       return c.json({
         success: false,
@@ -415,7 +415,7 @@ writingRoutes.get('/documents/:documentId/analytics', async (c) => {
       data: analytics
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, documentId: c.req.param('documentId') }, 'Failed to get analytics');
     return c.json({
       success: false,
@@ -459,7 +459,7 @@ writingRoutes.post('/documents/:documentId/share', async (c) => {
       message: 'Document shared successfully'
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, documentId: c.req.param('documentId') }, 'Failed to share document');
     return c.json({
       success: false,
@@ -533,7 +533,7 @@ writingRoutes.get('/student/:studentId/documents', async (c) => {
       data: documents
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, studentId: c.req.param('studentId') }, 'Failed to get student documents');
     return c.json({
       success: false,
@@ -605,7 +605,7 @@ writingRoutes.get('/prompts', async (c) => {
       data: prompts
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error }, 'Failed to get writing prompts');
     return c.json({
       success: false,
@@ -633,7 +633,7 @@ writingRoutes.delete('/documents/:documentId', async (c) => {
       message: 'Document deleted successfully'
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, documentId: c.req.param('documentId') }, 'Failed to delete document');
     return c.json({
       success: false,

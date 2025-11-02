@@ -73,7 +73,7 @@ wsRoutes.post('/broadcast', async (c) => {
       message: 'Message broadcasted successfully'
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error }, 'Failed to broadcast message');
     return c.json({
       success: false,
