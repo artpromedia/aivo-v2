@@ -15,6 +15,8 @@ interface WSMessage {
   clientId?: string;
 }
 
+// Future interfaces for typed WebSocket data - currently using type guards
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface FocusEventData {
   sessionId: string;
   attentionScore: number;
@@ -22,6 +24,7 @@ interface FocusEventData {
   timestamp: Date;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface GameUpdateData {
   sessionId: string;
   gameId: string;
@@ -30,6 +33,7 @@ interface GameUpdateData {
   currentLevel?: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface HomeworkProgressData {
   sessionId: string;
   stepId: string;
@@ -38,6 +42,7 @@ interface HomeworkProgressData {
   timeSpent?: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface WritingUpdateData {
   documentId: string;
   content: string;
@@ -228,8 +233,13 @@ class WebSocketManager {
 
     logger.debug({ clientId, eventType: data.eventType }, 'Processing focus event');
 
+    // Type guard for focus score
+    const focusScore = typeof data.focusScore === 'number' ? data.focusScore : 0;
+    const eventType = typeof data.eventType === 'string' ? data.eventType : '';
+    const attentionLevel = typeof data.attentionLevel === 'string' ? data.attentionLevel : 'normal';
+
     // Example: Send intervention if focus score drops
-    if (data.focusScore < 0.3 && data.eventType === 'distraction_detected') {
+    if (focusScore < 0.3 && eventType === 'distraction_detected') {
       this.sendMessage(clientId, {
         type: 'intervention_suggested',
         data: {
@@ -247,8 +257,8 @@ class WebSocketManager {
         type: 'focus_metrics_update',
         data: {
           studentId: connection.studentId,
-          focusScore: data.focusScore,
-          attentionLevel: data.attentionLevel,
+          focusScore: focusScore,
+          attentionLevel: attentionLevel,
           timestamp: new Date().toISOString()
         }
       }, [clientId]);
@@ -267,25 +277,34 @@ class WebSocketManager {
     // TODO: Update game state through Game Generation Agent
     // TODO: Calculate real-time progress and performance
 
+    // Type guards for game data
+    const correct = typeof data.correct === 'boolean' ? data.correct : false;
+    const score = typeof data.score === 'number' ? data.score : 0;
+    const streak = typeof data.streak === 'number' ? data.streak : 0;
+    const focusSessionId = typeof data.focusSessionId === 'string' ? data.focusSessionId : null;
+    const currentStep = typeof data.currentStep === 'number' ? data.currentStep : 0;
+    const totalSteps = typeof data.totalSteps === 'number' ? data.totalSteps : 1;
+    const focusImprovement = typeof data.focusImprovement === 'number' ? data.focusImprovement : 0;
+
     // Send real-time feedback
     this.sendMessage(clientId, {
       type: 'game_feedback',
       data: {
-        correct: data.correct,
-        score: data.score,
-        streak: data.streak,
-        encouragement: data.correct ? 'Great job!' : 'Keep trying!',
+        correct: correct,
+        score: score,
+        streak: streak,
+        encouragement: correct ? 'Great job!' : 'Keep trying!',
         timestamp: new Date().toISOString()
       }
     });
 
     // Update focus session if this is an intervention game
-    if (data.focusSessionId) {
-      this.broadcastToSession(data.focusSessionId, {
+    if (focusSessionId) {
+      this.broadcastToSession(focusSessionId, {
         type: 'intervention_progress',
         data: {
-          gameProgress: (data.currentStep / data.totalSteps) * 100,
-          focusImprovement: data.focusImprovement || 0,
+          gameProgress: (currentStep / totalSteps) * 100,
+          focusImprovement: focusImprovement,
           timestamp: new Date().toISOString()
         }
       }, [clientId]);
@@ -304,22 +323,29 @@ class WebSocketManager {
     // TODO: Update homework session through Homework Helper Agent
     // TODO: Provide real-time guidance and feedback
 
+    // Type guards for homework data
+    const stepCompleted = typeof data.stepCompleted === 'boolean' ? data.stepCompleted : false;
+    const stepNumber = typeof data.stepNumber === 'number' ? data.stepNumber : 0;
+    const totalSteps = typeof data.totalSteps === 'number' ? data.totalSteps : 1;
+    const strugglingIndicator = typeof data.strugglingIndicator === 'boolean' ? data.strugglingIndicator : false;
+    const timeOnStep = typeof data.timeOnStep === 'number' ? data.timeOnStep : 0;
+
     // Send step completion confirmation
-    if (data.stepCompleted) {
+    if (stepCompleted) {
       this.sendMessage(clientId, {
         type: 'step_completed',
         data: {
-          stepNumber: data.stepNumber,
+          stepNumber: stepNumber,
           feedback: 'Well done! Moving to the next step.',
-          nextStep: data.stepNumber + 1,
-          progress: (data.stepNumber / data.totalSteps) * 100,
+          nextStep: stepNumber + 1,
+          progress: (stepNumber / totalSteps) * 100,
           timestamp: new Date().toISOString()
         }
       });
     }
 
     // Send real-time hints if student is struggling
-    if (data.strugglingIndicator && data.timeOnStep > 300) { // 5 minutes
+    if (strugglingIndicator && timeOnStep > 300) { // 5 minutes
       this.sendMessage(clientId, {
         type: 'hint_available',
         data: {
