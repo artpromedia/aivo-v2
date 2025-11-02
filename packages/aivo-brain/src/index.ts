@@ -14,12 +14,14 @@ import { TaskType } from './types';
 // Main service exports
 import { ProviderManager } from './providers/provider-manager';
 import { EducationalCapabilities } from './capabilities';
-import { 
-  ProviderConfig, 
-  AIProvider, 
-  EducationalContext,
+import type { 
+  ProviderConfig,
   AIRequest,
   AIResponse
+} from './types';
+import { 
+  AIProvider, 
+  EducationalContext
 } from './types';
 
 /**

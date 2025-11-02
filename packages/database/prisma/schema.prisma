@@ -162,6 +162,24 @@ model User {
   
   // Audit and consent
   consentRecords    ConsentRecord[]
+  
+  // Phase 1 Features relationships
+  // Focus Guardian
+  focusSessionsAsStudent    FocusSession[] @relation("FocusSessionStudent")
+  focusSessionsAsTeacher    FocusSession[] @relation("FocusSessionTeacher")
+  
+  // Game Generation
+  gameSessionsAsStudent     GameSession[] @relation("GameSessionStudent")
+  gameSessionsAsTeacher     GameSession[] @relation("GameSessionTeacher")
+  
+  // Homework Helper
+  homeworkSessionsAsStudent HomeworkSession[] @relation("HomeworkSessionStudent")
+  homeworkSessionsAsTeacher HomeworkSession[] @relation("HomeworkSessionTeacher")
+  
+  // Writing Pad
+  writingDocumentsAsStudent WritingDocument[] @relation("WritingDocumentStudent")
+  writingDocumentsAsTeacher WritingDocument[] @relation("WritingDocumentTeacher")
+  writingComments           WritingComment[] @relation("WritingCommentAuthor")
 
   @@map("users")
 }
@@ -800,6 +818,612 @@ model UsageRecord {
   subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@map("usage_records")
+}
+
+// ================================
+// PHASE 1 FEATURES MODELS
+// ================================
+
+// Focus Guardian Models
+model FocusSession {
+  id                String    @id @default(cuid())
+  studentId         String
+  teacherId         String?
+  subject           String?   // Subject enum
+  activityType      String    // lesson, assignment, assessment, free_time
+  duration          Int       // planned duration in minutes
+  actualDuration    Int?      // actual duration in minutes
+  startedAt         DateTime  @default(now())
+  endedAt           DateTime?
+  status            String    @default("active") // active, paused, completed, interrupted
+  
+  // Focus metrics
+  focusScore        Float?    // 0-100 focus score
+  distractionCount  Int       @default(0)
+  attentionSpan     Int?      // longest continuous attention in minutes
+  fatigueLevel      String?   // low, medium, high
+  
+  // Settings and consent
+  parentalConsent   Boolean   @default(false)
+  consentedBy       String?   // Parent/Guardian ID
+  monitoringLevel   String    @default("basic") // basic, detailed, comprehensive
+  interventionLevel String    @default("gentle") // gentle, moderate, assertive
+  
+  // Analytics data
+  analytics         Json?     // Detailed analytics object
+  metadata          Json?     // Additional session metadata
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  student           User @relation("FocusSessionStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher           User? @relation("FocusSessionTeacher", fields: [teacherId], references: [id])
+  events            FocusEvent[]
+  interventions     FocusIntervention[]
+
+  @@index([studentId, startedAt])
+  @@index([status, startedAt])
+  @@map("focus_sessions")
+}
+
+model FocusEvent {
+  id                String    @id @default(cuid())
+  sessionId         String
+  type              String    // attention_lost, attention_regained, distraction_detected, fatigue_detected, interaction
+  severity          String    @default("low") // low, medium, high, critical
+  confidence        Float     // AI confidence score (0-1)
+  
+  // Event data
+  description       String?
+  duration          Int?      // event duration in seconds
+  triggers          String[]  // array of trigger types
+  context           Json?     // contextual information
+  
+  // Timestamps
+  detectedAt        DateTime  @default(now())
+  acknowledgedAt    DateTime?
+  resolvedAt        DateTime?
+  
+  // Metadata
+  deviceInfo        Json?     // device and browser information
+  environmentData   Json?     // environment context
+  
+  createdAt         DateTime  @default(now())
+
+  // Relationships
+  session           FocusSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, detectedAt])
+  @@index([type, detectedAt])
+  @@map("focus_events")
+}
+
+model FocusIntervention {
+  id                String    @id @default(cuid())
+  sessionId         String
+  type              String    // reminder, break_suggestion, game_break, breathing_exercise, stretching
+  strategy          String    // gentle, motivational, gamified, educational
+  
+  // Intervention details
+  title             String
+  description       String
+  content           Json?     // intervention content (text, images, activities)
+  duration          Int?      // suggested duration in minutes
+  
+  // Execution
+  triggeredAt       DateTime  @default(now())
+  startedAt         DateTime?
+  completedAt       DateTime?
+  skippedAt         DateTime?
+  effectiveness     String?   // effective, somewhat_effective, not_effective
+  
+  // Student response
+  studentResponse   Json?     // student's response and feedback
+  followUpNeeded    Boolean   @default(false)
+  
+  // Metadata
+  aiGenerated       Boolean   @default(true)
+  personalizedFor   String?   // personalization context
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  session           FocusSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, triggeredAt])
+  @@index([type, effectiveness])
+  @@map("focus_interventions")
+}
+
+// Game Generation Models
+model GameTemplate {
+  id                String    @id @default(cuid())
+  name              String
+  description       String
+  category          String    // math, reading, science, logic, memory, creativity
+  type              String    // puzzle, quiz, matching, sorting, drawing, story
+  
+  // Age and grade targeting
+  minAge            Int
+  maxAge            Int
+  gradeLevel        String    // GradeLevel enum
+  subject           String    // Subject enum
+  
+  // Game configuration
+  difficulty        String    @default("medium") // easy, medium, hard, adaptive
+  estimatedDuration Int       // estimated play time in minutes
+  maxPlayers        Int       @default(1)
+  isMultiplayer     Boolean   @default(false)
+  
+  // Template structure
+  structure         Json      // game structure and rules
+  contentSlots      Json      // dynamic content slots
+  scoringRubric     Json      // scoring and feedback rules
+  adaptationRules   Json      // difficulty adaptation rules
+  
+  // Metadata
+  tags              String[]
+  isActive          Boolean   @default(true)
+  popularity        Int       @default(0)
+  
+  createdBy         String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  games             GameSession[]
+
+  @@index([category, gradeLevel])
+  @@index([subject, difficulty])
+  @@map("game_templates")
+}
+
+model GameSession {
+  id                String    @id @default(cuid())
+  templateId        String
+  studentId         String
+  teacherId         String?
+  
+  // Session details
+  title             String
+  description       String?
+  status            String    @default("created") // created, started, paused, completed, abandoned
+  
+  // Game content (generated by AI)
+  generatedContent  Json      // AI-generated game content
+  gameState         Json      // current game state
+  playerProgress    Json      // player progress and achievements
+  
+  // Timing
+  startedAt         DateTime?
+  completedAt       DateTime?
+  estimatedDuration Int       // estimated duration in minutes
+  actualDuration    Int?      // actual play time in minutes
+  
+  // Scoring and results
+  score             Int?      // final score
+  maxScore          Int?      // maximum possible score
+  percentage        Float?    // percentage score
+  performanceLevel  String?   // excellent, good, satisfactory, needs_improvement
+  
+  // Learning outcomes
+  skillsAssessed    String[]  // skills being assessed
+  masteryLevels     Json      // mastery levels for different skills
+  learningObjectives String[] // learning objectives addressed
+  
+  // Feedback and analytics
+  aiAnalysis        Json?     // AI analysis of performance
+  feedback          String?   // personalized feedback
+  recommendations   String[]  // recommended next steps
+  
+  // Metadata
+  metadata          Json?     // additional game metadata
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  template          GameTemplate @relation(fields: [templateId], references: [id])
+  student           User @relation("GameSessionStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher           User? @relation("GameSessionTeacher", fields: [teacherId], references: [id])
+  results           GameResult[]
+
+  @@index([studentId, createdAt])
+  @@index([status, startedAt])
+  @@map("game_sessions")
+}
+
+model GameResult {
+  id                String    @id @default(cuid())
+  sessionId         String
+  
+  // Result details
+  completedAt       DateTime  @default(now())
+  score             Int
+  maxScore          Int
+  percentage        Float
+  timeTaken         Int       // time in seconds
+  
+  // Performance breakdown
+  skillBreakdown    Json      // performance by skill area
+  questionResults   Json      // individual question/challenge results
+  mistakes          Json      // analysis of mistakes made
+  strengths         Json      // identified strengths
+  improvements      Json      // areas for improvement
+  
+  // Learning analytics
+  difficultyPath    Json      // difficulty progression during game
+  engagementLevel   String    // high, medium, low
+  frustrationPoints Json      // points where student struggled
+  successMoments    Json      // moments of success and breakthrough
+  
+  // AI insights
+  aiInsights        Json      // AI analysis and insights
+  personalizedTips  String[]  // personalized learning tips
+  nextSteps         String[]  // recommended next activities
+  
+  createdAt         DateTime  @default(now())
+
+  // Relationships
+  session           GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([completedAt])
+  @@map("game_results")
+}
+
+// Homework Helper Models
+model HomeworkSession {
+  id                String    @id @default(cuid())
+  studentId         String
+  teacherId         String?
+  
+  // Problem details
+  subject           String    // Subject enum
+  topic             String
+  gradeLevel        String    // GradeLevel enum
+  problemType       String    // math_problem, essay, reading_comprehension, science_experiment
+  
+  // Problem content
+  problemStatement  String
+  problemImages     Json?     // array of image URLs
+  attachments       Json?     // array of file attachments
+  
+  // Session management
+  status            String    @default("active") // active, completed, paused, abandoned
+  startedAt         DateTime  @default(now())
+  completedAt       DateTime?
+  
+  // AI Analysis
+  initialAnalysis   Json?     // AI analysis of the problem
+  difficultyLevel   String?   // easy, medium, hard
+  estimatedTime     Int?      // estimated time in minutes
+  requiredSkills    String[]  // skills needed to solve
+  
+  // Solution tracking
+  solutionSteps     Json      // structured solution steps
+  currentStep       Int       @default(0)
+  hintsUsed         Int       @default(0)
+  maxHints          Int       @default(3)
+  
+  // Student work
+  studentWork       Json      // student's work and progress
+  finalAnswer       Json?     // student's final answer
+  confidence        String?   // student's confidence level
+  
+  // Feedback and results
+  feedback          String?   // AI-generated feedback
+  isCorrect         Boolean?  // whether the answer is correct
+  score             Float?    // numerical score if applicable
+  
+  // Learning analytics
+  strugglingAreas   String[]  // areas where student struggled
+  strengths         String[]  // areas where student excelled
+  recommendations   String[]  // personalized recommendations
+  
+  // Metadata
+  metadata          Json?     // additional session metadata
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  student           User @relation("HomeworkSessionStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher           User? @relation("HomeworkSessionTeacher", fields: [teacherId], references: [id])
+  hints             HomeworkHint[]
+  resources         HomeworkResource[]
+
+  @@index([studentId, createdAt])
+  @@index([subject, gradeLevel])
+  @@map("homework_sessions")
+}
+
+model HomeworkHint {
+  id                String    @id @default(cuid())
+  sessionId         String
+  stepNumber        Int
+  
+  // Hint details
+  hintType          String    // conceptual, procedural, example, encouragement
+  content           String
+  explanation       String?
+  examples          Json?     // array of examples
+  
+  // Interaction
+  requestedAt       DateTime  @default(now())
+  viewedAt          DateTime?
+  helpful           Boolean?  // student feedback on helpfulness
+  
+  // AI generation
+  aiGenerated       Boolean   @default(true)
+  personalizedFor   String?   // personalization context
+  difficulty        String    @default("appropriate") // too_easy, appropriate, too_hard
+  
+  createdAt         DateTime  @default(now())
+
+  // Relationships
+  session           HomeworkSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, stepNumber])
+  @@map("homework_hints")
+}
+
+model HomeworkResource {
+  id                String    @id @default(cuid())
+  sessionId         String?
+  
+  // Resource details
+  title             String
+  description       String
+  type              String    // video, article, interactive, practice_problems, tutorial
+  url               String?
+  content           String?
+  
+  // Targeting
+  subject           String    // Subject enum
+  gradeLevel        String    // GradeLevel enum
+  topics            String[]
+  skills            String[]
+  
+  // Metadata
+  duration          Int?      // estimated time to consume in minutes
+  difficulty        String    @default("medium") // easy, medium, hard
+  language          String    @default("en")
+  isInteractive     Boolean   @default(false)
+  
+  // Quality and engagement
+  rating            Float?    // average user rating
+  engagementScore   Float?    // engagement metrics
+  isRecommended     Boolean   @default(false)
+  
+  // Access control
+  isPublic          Boolean   @default(true)
+  requiresLogin     Boolean   @default(false)
+  
+  createdBy         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  session           HomeworkSession? @relation(fields: [sessionId], references: [id])
+
+  @@index([subject, gradeLevel])
+  @@index([type, isRecommended])
+  @@map("homework_resources")
+}
+
+// Writing Pad Models
+model WritingDocument {
+  id                String    @id @default(cuid())
+  studentId         String
+  teacherId         String?
+  
+  // Document details
+  title             String
+  type              String    // essay, story, report, journal, poem, letter
+  subject           String?   // Subject enum
+  gradeLevel        String    // GradeLevel enum
+  
+  // Content
+  content           String    @default("")
+  wordCount         Int       @default(0)
+  characterCount    Int       @default(0)
+  
+  // Assignment context
+  prompt            String?   // writing prompt or assignment
+  instructions      Json?     // specific instructions
+  rubric            Json?     // grading rubric
+  requirements      Json?     // requirements (min words, format, etc.)
+  
+  // Status and timing
+  status            String    @default("draft") // draft, in_progress, submitted, graded
+  startedAt         DateTime  @default(now())
+  submittedAt       DateTime?
+  dueDate           DateTime?
+  
+  // Collaboration
+  isShared          Boolean   @default(false)
+  shareSettings     Json?     // sharing settings and permissions
+  collaborators     String[]  // array of user IDs
+  
+  // AI assistance
+  aiAssistanceLevel String    @default("basic") // none, basic, moderate, comprehensive
+  suggestionMode    String    @default("grammar") // grammar, style, content, all
+  
+  // Writing analytics
+  writingTime       Int       @default(0) // total writing time in minutes
+  revisionCount     Int       @default(0)
+  pauseCount        Int       @default(0)
+  deletionCount     Int       @default(0)
+  
+  // Feedback and scoring
+  aiScore           Float?    // AI-generated overall score
+  readabilityScore  Float?    // readability analysis
+  grammarScore      Float?    // grammar accuracy
+  creativityScore   Float?    // creativity assessment
+  
+  // Metadata
+  metadata          Json?     // additional document metadata
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  student           User @relation("WritingDocumentStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher           User? @relation("WritingDocumentTeacher", fields: [teacherId], references: [id])
+  feedback          WritingFeedback[]
+  revisions         WritingRevision[]
+  comments          WritingComment[]
+
+  @@index([studentId, createdAt])
+  @@index([status, dueDate])
+  @@map("writing_documents")
+}
+
+model WritingFeedback {
+  id                String    @id @default(cuid())
+  documentId        String
+  
+  // Feedback details
+  type              String    // grammar, style, content, structure, creativity
+  category          String    // strength, suggestion, error, question
+  
+  // Content
+  feedback          String
+  suggestion        String?
+  explanation       String?
+  
+  // Location in document
+  startPosition     Int?      // character position
+  endPosition       Int?      // character position
+  selectedText      String?   // text being referenced
+  
+  // AI generation
+  aiGenerated       Boolean   @default(true)
+  confidence        Float?    // AI confidence score
+  priority          String    @default("medium") // low, medium, high
+  
+  // Student interaction
+  viewedAt          DateTime?
+  acceptedAt        DateTime?
+  dismissedAt       DateTime?
+  helpful           Boolean?  // student feedback
+  
+  // Resolution
+  resolved          Boolean   @default(false)
+  resolvedAt        DateTime?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  document          WritingDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, type])
+  @@index([aiGenerated, priority])
+  @@map("writing_feedback")
+}
+
+model WritingRevision {
+  id                String    @id @default(cuid())
+  documentId        String
+  
+  // Revision details
+  versionNumber     Int
+  content           String
+  changeDescription String?
+  
+  // Change tracking
+  additions         Json?     // array of added text segments
+  deletions         Json?     // array of deleted text segments
+  modifications     Json?     // array of modified text segments
+  
+  // Timing
+  createdAt         DateTime  @default(now())
+  
+  // Metadata
+  wordCount         Int       @default(0)
+  characterCount    Int       @default(0)
+  metadata          Json?     // additional revision metadata
+
+  // Relationships
+  document          WritingDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, versionNumber])
+  @@map("writing_revisions")
+}
+
+model WritingComment {
+  id                String    @id @default(cuid())
+  documentId        String
+  authorId          String
+  
+  // Comment details
+  content           String
+  type              String    @default("general") // general, suggestion, question, praise
+  
+  // Location in document
+  startPosition     Int?      // character position
+  endPosition       Int?      // character position
+  selectedText      String?   // text being commented on
+  
+  // Thread management
+  parentCommentId   String?   // for replies
+  isResolved        Boolean   @default(false)
+  resolvedAt        DateTime?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  document          WritingDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  author            User @relation("WritingCommentAuthor", fields: [authorId], references: [id])
+  parent            WritingComment? @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  replies           WritingComment[] @relation("CommentReplies")
+
+  @@index([documentId, createdAt])
+  @@index([authorId])
+  @@map("writing_comments")
+}
+
+// Writing Prompt Templates
+model WritingPrompt {
+  id                String    @id @default(cuid())
+  title             String
+  description       String
+  prompt            String
+  
+  // Targeting
+  type              String    // creative, argumentative, narrative, expository, descriptive
+  subject           String?   // Subject enum
+  gradeLevel        String    // GradeLevel enum
+  
+  // Configuration
+  difficulty        String    @default("medium") // easy, medium, hard
+  estimatedTime     Int       // estimated writing time in minutes
+  minWords          Int?      // minimum word count
+  maxWords          Int?      // maximum word count
+  
+  // Content
+  instructions      Json?     // detailed instructions
+  examples          Json?     // example responses
+  rubric            Json?     // evaluation rubric
+  keywords          String[]  // relevant keywords
+  
+  // Metadata
+  tags              String[]
+  isActive          Boolean   @default(true)
+  popularity        Int       @default(0)
+  
+  createdBy         String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([gradeLevel, subject])
+  @@index([type, difficulty])
+  @@map("writing_prompts")
 }
 
 // Note: Indexes are defined within each model block above for better organization

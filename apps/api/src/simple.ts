@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { prettyJSON } from 'hono/pretty-json';
-import { env } from './config/env.js';
+
 
 /**
  * Simple Aivo Platform API Server - Development Version
@@ -106,7 +106,7 @@ const hostname = process.env.HOST || 'localhost';
 
 console.log('🚀 Starting Aivo Platform API...');
 
-const server = serve({
+serve({
   fetch: app.fetch,
   port,
   hostname,

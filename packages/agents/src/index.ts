@@ -13,6 +13,9 @@ export { BaselineAssessmentAgent } from './agents/baseline-assessment-agent';
 export { PersonalModelAgent } from './agents/personal-model-agent';
 export { IEPAssistantAgent } from './agents/iep-assistant-agent';
 export { ProgressMonitorAgent } from './agents/progress-monitor-agent';
+export { HomeworkHelperAgent } from './agents/homework-helper-agent';
+export { FocusGuardianAgent } from './agents/focus-guardian-agent';
+export { GameGenerationAgent } from './agents/game-generation-agent';
 
 // Agent Factory and Utilities
 export class AgentFactory {
@@ -43,6 +46,18 @@ export class AgentFactory {
       case AgentType.PROGRESS_MONITOR:
         const { ProgressMonitorAgent } = require('./agents/progress-monitor-agent');
         return new ProgressMonitorAgent(config, context, aivoBrain);
+        
+      case AgentType.FOCUS_GUARDIAN:
+        const { FocusGuardianAgent } = require('./agents/focus-guardian-agent');
+        return new FocusGuardianAgent(type, config, context, aivoBrain);
+        
+      case AgentType.GAME_GENERATOR:
+        const { GameGenerationAgent } = require('./agents/game-generation-agent');
+        return new GameGenerationAgent(type, config, context, aivoBrain);
+        
+      case AgentType.HOMEWORK_HELPER:
+        const { HomeworkHelperAgent } = require('./agents/homework-helper-agent');
+        return new HomeworkHelperAgent(config, context, aivoBrain);
         
       default:
         throw new Error(`Unknown agent type: ${type}`);
@@ -79,6 +94,14 @@ export const PACKAGE_INFO = {
     progress_monitor: {
       description: 'Advanced progress tracking and trend analysis with predictive insights',
       capabilities: ['trend_analysis', 'alert_generation', 'outcome_prediction', 'automated_reporting']
+    },
+    focus_guardian: {
+      description: 'Real-time attention monitoring and intervention system with privacy-first design',
+      capabilities: ['attention_tracking', 'distraction_detection', 'intervention_strategies', 'focus_analytics', 'parental_controls']
+    },
+    game_generator: {
+      description: 'Educational game generation with age-appropriate content and dynamic difficulty',
+      capabilities: ['age_appropriate_games', 'dynamic_content', 'educational_alignment', 'engagement_analytics', 'adaptive_difficulty']
     }
   }
 };

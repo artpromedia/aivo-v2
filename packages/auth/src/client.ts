@@ -1,6 +1,7 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { SignJWT, jwtVerify } from 'jose';
-import bcrypt from 'bcryptjs';
+
 import type { 
   AuthConfig, 
   AuthService, 
@@ -30,7 +31,6 @@ export class SupabaseAuthService implements AuthService {
     try {
       // Rate limiting check
       if (this.config.rateLimit.enabled) {
-        const rateLimitKey = `login:${credentials.email || credentials.phoneNumber}`;
         // Implementation would check rate limit here
       }
 

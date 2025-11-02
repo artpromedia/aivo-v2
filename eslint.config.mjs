@@ -44,6 +44,18 @@ export default typescript.config(
       '**/.next/**',
       '**/coverage/**',
       '**/.turbo/**',
+      '**/dev-dist/**',
+      '**/workbox-*.js',
+      '**/sw.js',
+      '**/registerSW.js',
+      '**/postcss.config.cjs',
+      '**/tailwind.config.js',
+      '**/vite.config.js',
+      '**/vite.config.d.ts',
+      '**/eslint.config.js',
+      '**/prisma/seed.js',
+      '**/src/tests/integration-disabled/**',
+      '**/src/tests/run-tests.js',
     ],
   }
 );

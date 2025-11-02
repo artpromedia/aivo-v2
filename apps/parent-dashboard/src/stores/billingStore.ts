@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Subscription, PaymentMethod, Invoice } from '../types';
+import type { Subscription, PaymentMethod, Invoice } from '../types';
 
 interface BillingState {
   subscription: Subscription | null;

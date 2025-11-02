@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { OfflineData, OfflineAction } from '../types';
+import type { OfflineData, OfflineAction } from '../types';
 
 interface OfflineState {
   isOnline: boolean;

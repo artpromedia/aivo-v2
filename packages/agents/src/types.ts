@@ -8,7 +8,10 @@ export enum AgentType {
   BASELINE_ASSESSMENT = 'baseline_assessment',
   PERSONAL_MODEL = 'personal_model',
   IEP_ASSISTANT = 'iep_assistant',
-  PROGRESS_MONITOR = 'progress_monitor'
+  PROGRESS_MONITOR = 'progress_monitor',
+  FOCUS_GUARDIAN = 'focus_guardian',
+  GAME_GENERATOR = 'game_generator',
+  HOMEWORK_HELPER = 'homework_helper'
 }
 
 export enum AgentStatus {
@@ -386,6 +389,16 @@ export interface ProgressMonitorAgentInterface extends AgentInterface {
   predictOutcomes(domain: AssessmentDomain, projectionDays: number): Promise<any>;
 }
 
+export interface HomeworkHelperAgentInterface extends AgentInterface {
+  analyzeImageProblem(imageData: string | Buffer, mimeType: string, context?: any): Promise<HomeworkAnalysis>;
+  analyzeDocumentProblem(documentData: Buffer, mimeType: string, filename: string, context?: any): Promise<HomeworkAnalysis>;
+  analyzeTextProblem(problemText: string, context?: any): Promise<HomeworkAnalysis>;
+  startHomeworkSession(analysis: HomeworkAnalysis): Promise<HomeworkSession>;
+  getHint(sessionId: string, stepNumber: number, studentAttempt?: string, specificQuestion?: string): Promise<HomeworkHint>;
+  submitStepAnswer(sessionId: string, stepNumber: number, answer: any, workShown?: string, timeSpent?: number): Promise<any>;
+  getSessionStatus(sessionId: string): Promise<HomeworkSession>;
+}
+
 // =============================================================================
 // PROGRESS MONITORING TYPES
 // =============================================================================
@@ -406,5 +419,77 @@ export interface ProgressTrend {
   dataPoints: number;
   insights: string[];
   predictions: string[];
+}
+
+// =============================================================================
+// HOMEWORK HELPER TYPES
+// =============================================================================
+
+export interface HomeworkProblem {
+  id: string;
+  extractedContent: string;
+  subject: string;
+  topic: string;
+  type: 'word_problem' | 'equation' | 'diagram' | 'multiple_choice' | 'essay' | 'other';
+  difficulty: 'easy' | 'medium' | 'hard';
+  gradeLevel: string;
+  requirements: string[];
+}
+
+export interface HomeworkSolution {
+  approach: string;
+  steps: HomeworkStep[];
+  estimatedTime: number;
+  accommodations: string[];
+}
+
+export interface HomeworkStep {
+  stepNumber: number;
+  instruction: string;
+  hints: string[];
+  expectedAnswer: any;
+  commonMistakes: string[];
+  hintsGiven?: number;
+}
+
+export interface HomeworkHint {
+  id: string;
+  stepNumber: number;
+  level: number;
+  type: 'conceptual' | 'procedural' | 'encouraging' | 'clarifying';
+  content: string;
+  encouragement: string;
+  nextSteps: string[];
+  visualAid?: string;
+  timestamp: Date;
+}
+
+export interface HomeworkSession {
+  id: string;
+  studentId: string;
+  problem: HomeworkProblem;
+  solution: HomeworkSolution;
+  startTime: Date;
+  currentStep: number;
+  hintsUsed: number;
+  attemptsPerStep: number[];
+  timeSpentPerStep: number[];
+  totalTimeSpent: number;
+  problemsSolved: number;
+  status: 'active' | 'completed' | 'abandoned';
+  performance: {
+    accuracy: number;
+    efficiency: number;
+    independence: number;
+    understanding: number;
+  };
+}
+
+export interface HomeworkAnalysis {
+  problem: HomeworkProblem;
+  solution: HomeworkSolution;
+  confidence: number;
+  extractionQuality: 'high' | 'medium' | 'low';
+  additionalNotes: string[];
 }
 

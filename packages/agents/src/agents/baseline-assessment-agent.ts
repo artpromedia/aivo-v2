@@ -1,10 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { BaseAgent } from './base-agent';
-import {
-  AgentType,
-  AssessmentDomain,
-  DifficultyLevel,
-  DisabilityType,
+import type {
   AssessmentQuestion,
   AssessmentResponse,
   AssessmentResult,
@@ -13,7 +9,13 @@ import {
   AgentConfig,
   AgentContext
 } from '../types';
-import { AivoBrain } from '@aivo/aivo-brain';
+import {
+  AgentType,
+  AssessmentDomain,
+  DifficultyLevel,
+  DisabilityType
+} from '../types';
+import type { AivoBrain } from '@aivo/aivo-brain';
 
 /**
  * BaselineAssessmentAgent - Specialized agent for adaptive baseline assessments
@@ -460,7 +462,7 @@ Return the report in JSON format following the AssessmentReport schema.
   private parseEvaluationResponse(
     aiResponse: string,
     question: AssessmentQuestion,
-    response: AssessmentResponse
+    _response: AssessmentResponse
   ): AssessmentResult {
     try {
       const parsed = JSON.parse(aiResponse);

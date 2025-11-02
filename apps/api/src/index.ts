@@ -1,7 +1,7 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { logger as honoLogger } from 'hono/logger';
+
 import { prettyJSON } from 'hono/pretty-json';
 import { secureHeaders } from 'hono/secure-headers';
 import { trimTrailingSlash } from 'hono/trailing-slash';
@@ -161,54 +161,86 @@ app.get('/api', (c) => {
   });
 });
 
+// Import new route modules
+import { focusRoutes, gamesRoutes, homeworkRoutes, writingRoutes, wsRoutes } from './routes/index.js';
+
 /**
- * API v1 routes (will be implemented)
+ * API v1 routes
  */
 const v1Routes = new Hono();
 
-// Authentication routes
+// Focus monitoring routes
+v1Routes.route('/focus', focusRoutes);
+
+// Game generation routes
+v1Routes.route('/games', gamesRoutes);
+
+// Homework assistance routes
+v1Routes.route('/homework', homeworkRoutes);
+
+// Writing pad routes
+v1Routes.route('/writing', writingRoutes);
+
+// WebSocket routes
+v1Routes.route('/ws', wsRoutes);
+
+// Authentication routes (to be implemented)
 // v1Routes.route('/auth', authRoutes);
 
-// User management routes
+// User management routes (to be implemented)
 // v1Routes.route('/users', userRoutes);
 
-// Student management routes
+// Student management routes (to be implemented)
 // v1Routes.route('/students', studentRoutes);
 
-// Assessment routes
+// Assessment routes (to be implemented)
 // v1Routes.route('/assessments', assessmentRoutes);
 
-// AI/Chat routes
+// AI/Chat routes (to be implemented)
 // v1Routes.route('/ai', aiRoutes);
 
-// Curriculum routes
+// Curriculum routes (to be implemented)
 // v1Routes.route('/curriculum', curriculumRoutes);
 
-// Subscription/billing routes
+// Subscription/billing routes (to be implemented)
 // v1Routes.route('/subscriptions', subscriptionRoutes);
 
-// Analytics routes
+// Analytics routes (to be implemented)
 // v1Routes.route('/analytics', analyticsRoutes);
 
-// Admin routes
+// Admin routes (to be implemented)
 // v1Routes.route('/admin', adminRoutes);
 
-// Placeholder for v1 API
+// API v1 overview
 v1Routes.get('/', (c) => {
   return c.json({
     message: 'Aivo Platform API v1',
     version: '1.0.0',
-    endpoints: [
-      'GET /auth - Authentication endpoints',
-      'GET /users - User management',
-      'GET /students - Student management',
-      'GET /assessments - Assessment system',
-      'GET /ai - AI-powered features',
-      'GET /curriculum - Curriculum management',
-      'GET /subscriptions - Subscription management',
-      'GET /analytics - Analytics and reporting',
-      'GET /admin - Administrative functions',
-    ],
+    description: 'Enhanced AI-powered educational platform with Phase 1 features',
+    endpoints: {
+      focus: 'GET /focus - Focus monitoring and attention tracking',
+      games: 'GET /games - Educational game generation and management', 
+      homework: 'GET /homework - AI-powered homework assistance',
+      writing: 'GET /writing - Digital writing pad with real-time feedback',
+      websocket: 'GET /ws - WebSocket connections for real-time features',
+      // Future endpoints
+      auth: 'GET /auth - Authentication endpoints (coming soon)',
+      users: 'GET /users - User management (coming soon)',
+      students: 'GET /students - Student management (coming soon)',
+      assessments: 'GET /assessments - Assessment system (coming soon)',
+      ai: 'GET /ai - AI-powered features (coming soon)',
+      curriculum: 'GET /curriculum - Curriculum management (coming soon)',
+      subscriptions: 'GET /subscriptions - Subscription management (coming soon)',
+      analytics: 'GET /analytics - Analytics and reporting (coming soon)',
+      admin: 'GET /admin - Administrative functions (coming soon)',
+    },
+    phase1Features: {
+      focusGuardian: 'Real-time attention monitoring with privacy controls',
+      gameGeneration: 'Age-appropriate educational games with adaptive difficulty',
+      homeworkHelper: 'Step-by-step homework assistance with personalized guidance',
+      writingPad: 'Digital writing with real-time feedback and collaboration',
+      realTimeUpdates: 'WebSocket support for live interactions'
+    }
   });
 });
 
@@ -313,7 +345,7 @@ async function startServer() {
     await initializeApp();
 
     // Start the HTTP server
-    const server = serve({
+    serve({
       fetch: app.fetch,
       port: env.PORT,
       hostname: env.HOST,

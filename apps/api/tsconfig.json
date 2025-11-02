@@ -42,7 +42,8 @@
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "src/tests/integration-disabled"
   ],
   "ts-node": {
     "esm": true

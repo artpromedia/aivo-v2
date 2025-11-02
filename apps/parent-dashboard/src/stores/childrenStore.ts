@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Child, LearningGoal, ScreenTimeData, AISuggestion } from '../types';
+import type { Child, LearningGoal, ScreenTimeData, AISuggestion } from '../types';
 
 interface ChildrenState {
   children: Child[];

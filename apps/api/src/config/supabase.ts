@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { logger } from './logger.js';
 import { env } from './env.js';
 
@@ -101,7 +101,7 @@ export async function initializeSupabase(): Promise<void> {
     const supabase = getSupabaseClient();
     
     // Test the connection by making a simple query
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('users') // This table might not exist yet, that's okay
       .select('count')
       .limit(1)
@@ -329,7 +329,7 @@ export class SupabaseDatabase {
   /**
    * Execute raw SQL (use with caution)
    */
-  async sql(query: string, params: any[] = []) {
+  async sql(query: string, _params: unknown[] = []) {
     // Note: This would require a custom RPC function in Supabase
     // that accepts SQL queries. Not recommended for production.
     throw new Error('Raw SQL execution not implemented. Use RPC functions instead.');

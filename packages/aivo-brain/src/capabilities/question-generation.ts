@@ -1,14 +1,15 @@
-import { 
+import type { 
   ProviderManager 
 } from '../providers/provider-manager';
-import {
+import type {
   AIRequest,
   AIResponse,
-  TaskType,
-  QuestionType,
   QuestionGenerationRequest,
   GeneratedQuestion,
-  EducationalContext,
+  EducationalContext} from '../types';
+import {
+  TaskType,
+  QuestionType,
   Priority
 } from '../types';
 
@@ -315,7 +316,7 @@ export class QuestionGenerationService {
     }
 
     // Focus on struggling topics if any
-    let adaptedContext = { ...request.context };
+    const adaptedContext = { ...request.context };
     if (performance.strugglingTopics.length > 0) {
       adaptedContext.learningObjectives = [
         ...(adaptedContext.learningObjectives || []),

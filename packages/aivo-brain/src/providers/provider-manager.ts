@@ -1,16 +1,17 @@
 import { EventEmitter } from 'events';
 import PQueue from 'p-queue';
-import {
-  AIProvider,
+import type {
   AIProviderInterface,
   AIRequest,
   AIResponse,
-  ProviderConfig,
   ProviderHealth,
-  ProviderStatus,
   TaskType,
   LoadBalancingConfig,
-  RoutingStrategy,
+  RoutingStrategy} from '../types';
+import {
+  AIProvider,
+  ProviderConfig,
+  ProviderStatus,
   AIError,
   AIErrorType,
   Priority
@@ -136,7 +137,7 @@ export class ProviderManager extends EventEmitter {
     }
 
     let lastError: AIError | null = null;
-    let attemptedProviders: AIProvider[] = [];
+    const attemptedProviders: AIProvider[] = [];
 
     // Try primary provider selection
     const primaryProvider = strategy.selectProvider(availableProviders, request);

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Notification, Message, Conversation } from '../types';
+import type { Notification, Message, Conversation } from '../types';
 
 interface NotificationState {
   notifications: Notification[];

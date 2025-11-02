@@ -1,5 +1,6 @@
-import { openDB, IDBPDatabase } from 'idb';
-import { OfflineData, Lesson, Progress, User, OfflineAction } from '../types';
+import type { IDBPDatabase } from 'idb';
+import { openDB } from 'idb';
+import type { OfflineData, Lesson, Progress, User, OfflineAction } from '../types';
 
 const DB_NAME = 'AivoLearnerDB';
 const DB_VERSION = 1;

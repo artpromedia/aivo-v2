@@ -257,7 +257,7 @@ async function startServer() {
     await initializeApp();
 
     // Start the HTTP server
-    const server = serve({
+    serve({
       fetch: app.fetch,
       port: env.PORT,
       hostname: env.HOST,

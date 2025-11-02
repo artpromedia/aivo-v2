@@ -1,18 +1,19 @@
 import { v4 as uuidv4 } from 'uuid';
 import { addDays, addMonths, format } from 'date-fns';
 import { BaseAgent } from './base-agent';
-import {
-  AgentType,
-  AssessmentDomain,
+import type {
   AssessmentReport,
   IEPData,
   IEPGoal,
   IEPAssistantAgentInterface,
   AgentConfig,
-  AgentContext,
+  AgentContext} from '../types';
+import {
+  AgentType,
+  AssessmentDomain,
   DisabilityType
 } from '../types';
-import { AivoBrain } from '@aivo/aivo-brain';
+import type { AivoBrain } from '@aivo/aivo-brain';
 
 /**
  * IEPAssistantAgent - Specialized agent for IEP management and support

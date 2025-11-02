@@ -4,14 +4,16 @@ import pRetry from 'p-retry';
 import pTimeout from 'p-timeout';
 import PQueue from 'p-queue';
 import winston from 'winston';
-import { AivoBrain } from '@aivo/aivo-brain';
-import {
+import type { AivoBrain } from '@aivo/aivo-brain';
+import type {
   AgentType,
-  AgentStatus,
   AgentConfig,
   AgentContext,
   AgentInterface,
   StreamingCapable
+} from '../types';
+import {
+  AgentStatus
 } from '../types';
 
 /**
@@ -368,7 +370,7 @@ export abstract class BaseAgent extends EventEmitter implements AgentInterface, 
    */
   protected async generateCompletion(
     prompt: string,
-    options: {
+    _options: {
       taskType?: string;
       maxTokens?: number;
       temperature?: number;
@@ -377,23 +379,6 @@ export abstract class BaseAgent extends EventEmitter implements AgentInterface, 
   ): Promise<any> {
     return await this.executeTask('ai_completion', async () => {
       // This would integrate with the actual AIVO Brain API
-      // For now, we'll create a mock structure
-      const request = {
-        id: uuidv4(),
-        taskType: options.taskType || 'text_generation',
-        prompt,
-        context: {
-          studentId: this.context.student.id,
-          agentType: this.agentType
-        },
-        options: {
-          maxTokens: options.maxTokens || 1000,
-          temperature: options.temperature || 0.7,
-          stream: options.stream || false,
-          retries: 3
-        }
-      };
-
       // TODO: Replace with actual AIVO Brain integration
       return {
         content: `AI response for: ${prompt}`,

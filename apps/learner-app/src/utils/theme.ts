@@ -1,4 +1,4 @@
-import { AgeGroup, ThemeConfig } from '../types';
+import type { AgeGroup, ThemeConfig } from '../types';
 
 export const themeConfigs: Record<AgeGroup, ThemeConfig> = {
   k5: {

@@ -1,10 +1,11 @@
 import OpenAI from 'openai';
 import { BaseAIProvider } from './base-provider';
-import {
-  AIProvider,
+import type {
   AIRequest,
   AIResponse,
-  ProviderConfig,
+  ProviderConfig} from '../types';
+import {
+  AIProvider,
   TaskType
 } from '../types';
 

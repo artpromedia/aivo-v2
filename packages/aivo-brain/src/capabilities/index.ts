@@ -14,7 +14,7 @@ import { QuestionGenerationService } from './question-generation';
 import { ContentAdaptationService } from './content-adaptation';
 import { AssessmentGradingService } from './assessment-grading';
 import { PersonalizedTutoringService } from './personalized-tutoring';
-import { ProviderManager } from '../providers/provider-manager';
+import type { ProviderManager } from '../providers/provider-manager';
 
 /**
  * Main Educational AI Capabilities Service

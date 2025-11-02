@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Lesson, Progress, Assessment } from '../types';
+import type { Lesson, Progress, Assessment } from '../types';
 
 interface LessonState {
   lessons: Lesson[];

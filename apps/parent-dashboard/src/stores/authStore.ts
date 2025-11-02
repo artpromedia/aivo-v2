@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Parent, ParentPermissions } from '../types';
+import type { Parent, ParentPermissions } from '../types';
 
 interface AuthState {
   parent: Parent | null;

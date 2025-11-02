@@ -1,18 +1,20 @@
 import { v4 as uuidv4 } from 'uuid';
 import { BaseAgent } from './base-agent';
-import {
-  AgentType,
-  AssessmentDomain,
-  AssessmentReport,
+import type {
   IEPGoal,
   ProgressMonitorAgentInterface,
   AgentConfig,
   AgentContext,
   ProgressTrend,
-  AlertLevel,
   ProgressAlert
 } from '../types';
-import { AivoBrain } from '@aivo/aivo-brain';
+import {
+  AgentType,
+  AssessmentDomain,
+  AssessmentReport,
+  AlertLevel
+} from '../types';
+import type { AivoBrain } from '@aivo/aivo-brain';
 
 /**
  * ProgressMonitorAgent - Specialized agent for tracking and analyzing student progress

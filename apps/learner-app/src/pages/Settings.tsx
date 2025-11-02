@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useUserStore } from '../stores/userStore';
-import { AgeGroup, Badge } from '../types';
+import type { AgeGroup, Badge } from '../types';
 import { 
   Volume2, 
   Type, 

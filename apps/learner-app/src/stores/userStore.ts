@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, AccessibilitySettings } from '../types';
+import type { User, AccessibilitySettings } from '../types';
 import { applyTheme } from '../utils/theme';
 
 interface UserState {

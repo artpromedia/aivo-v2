@@ -1,17 +1,19 @@
 import { v4 as uuidv4 } from 'uuid';
 import { cloneDeep, merge } from 'lodash';
 import { BaseAgent } from './base-agent';
-import {
-  AgentType,
-  AssessmentDomain,
-  LearningStyle,
+import type {
   AssessmentReport,
   PersonalModelUpdate,
   PersonalModelAgentInterface,
   AgentConfig,
   AgentContext
 } from '../types';
-import { AivoBrain } from '@aivo/aivo-brain';
+import {
+  AgentType,
+  AssessmentDomain,
+  LearningStyle
+} from '../types';
+import type { AivoBrain } from '@aivo/aivo-brain';
 
 /**
  * PersonalModelAgent - Manages personalized learning models for individual students

@@ -1,13 +1,14 @@
-import { 
+import type { 
   ProviderManager 
 } from '../providers/provider-manager';
-import {
+import type {
   AIRequest,
   AIResponse,
-  TaskType,
   ContentAdaptationRequest,
   AdaptedContent,
-  EducationalContext,
+  EducationalContext} from '../types';
+import {
+  TaskType,
   Priority
 } from '../types';
 

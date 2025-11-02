@@ -1,15 +1,16 @@
 import { EventEmitter } from 'events';
 import pRetry from 'p-retry';
 import pTimeout from 'p-timeout';
-import { 
+import type { 
   AIProvider, 
   AIProviderInterface, 
   AIRequest, 
   AIResponse, 
   ProviderConfig, 
-  ProviderHealth, 
+  ProviderHealth,
+  TaskType} from '../types';
+import { 
   ProviderStatus,
-  TaskType,
   AIError,
   AIErrorType,
   RequestMetrics
