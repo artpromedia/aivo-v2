@@ -1,0 +1,61 @@
+{
+  "name": "@aivo/agents",
+  "version": "1.0.0",
+  "description": "AI Agents package for AIVO platform - specialized educational AI agents",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rimraf dist",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "keywords": [
+    "aivo",
+    "ai-agents",
+    "education",
+    "assessment",
+    "iep",
+    "personalized-learning"
+  ],
+  "author": "AIVO Team",
+  "license": "MIT",
+  "dependencies": {
+    "@aivo/aivo-brain": "workspace:*",
+    "@aivo/types": "workspace:*",
+    "zod": "^3.22.4",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0",
+    "p-retry": "^6.2.0",
+    "p-timeout": "^6.1.2",
+    "p-queue": "^8.0.1",
+    "lodash": "^4.17.21",
+    "date-fns": "^2.30.0"
+  },
+  "devDependencies": {
+    "@types/uuid": "^9.0.7",
+    "@types/lodash": "^4.14.202",
+    "@types/node": "^20.10.5",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0",
+    "@vitest/coverage-v8": "^1.1.0",
+    "rimraf": "^5.0.5",
+    "eslint": "^8.56.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aivo/aivo-platform.git",
+    "directory": "packages/agents"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  }
+}
