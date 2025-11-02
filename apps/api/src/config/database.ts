@@ -179,6 +179,7 @@ export async function softDelete(
 ) {
   const now = new Date();
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return await (prisma as any)[model].update({
     where: { id },
     data: {

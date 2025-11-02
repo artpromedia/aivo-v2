@@ -1,3 +1,4 @@
+-- sql:postgres
 -- PostgreSQL Database Initialization Script for Docker
 -- This script runs when the PostgreSQL container starts for the first time
 -- NOTE: This file contains PostgreSQL-specific syntax and should NOT be validated with MSSQL tools

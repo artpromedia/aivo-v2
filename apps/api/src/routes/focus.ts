@@ -103,12 +103,12 @@ focusRoutes.post(
         message: 'Focus monitoring session started successfully'
       }, 201);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error }, 'Failed to start focus monitoring session');
       return c.json({
         success: false,
         error: 'Failed to start session',
-        message: error.message
+        message: error instanceof Error ? error.message : 'Unknown error'
       }, 500);
     }
   }
@@ -149,7 +149,7 @@ focusRoutes.get('/sessions/:sessionId', async (c) => {
       data: session
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, sessionId: c.req.param('sessionId') }, 'Failed to get session');
     return c.json({
       success: false,
@@ -187,7 +187,7 @@ focusRoutes.post(
         interventionNeeded: false // This would be determined by agent
       });
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error }, 'Failed to process focus event');
       return c.json({
         success: false,
@@ -221,7 +221,7 @@ focusRoutes.put(
         updatedAt: new Date().toISOString()
       });
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error, sessionId: c.req.param('sessionId') }, 'Failed to update session state');
       return c.json({
         success: false,
@@ -260,7 +260,7 @@ focusRoutes.post('/sessions/:sessionId/intervention', async (c) => {
       data: intervention
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, sessionId: c.req.param('sessionId') }, 'Failed to trigger intervention');
     return c.json({
       success: false,
@@ -316,7 +316,7 @@ focusRoutes.get('/sessions/:sessionId/analytics', async (c) => {
       data: analytics
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, sessionId: c.req.param('sessionId') }, 'Failed to get analytics');
     return c.json({
       success: false,
@@ -355,7 +355,7 @@ focusRoutes.delete('/sessions/:sessionId', async (c) => {
       data: finalReport
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, sessionId: c.req.param('sessionId') }, 'Failed to end session');
     return c.json({
       success: false,
@@ -403,7 +403,7 @@ focusRoutes.get('/student/:studentId/history', async (c) => {
       data: history
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, studentId: c.req.param('studentId') }, 'Failed to get focus history');
     return c.json({
       success: false,

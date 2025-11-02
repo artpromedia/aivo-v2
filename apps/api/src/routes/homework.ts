@@ -152,12 +152,12 @@ homeworkRoutes.post(
         message: 'Text problem analyzed successfully'
       }, 201);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error }, 'Failed to analyze homework text');
       return c.json({
         success: false,
         error: 'Failed to analyze problem',
-        message: error.message
+        message: error instanceof Error ? error.message : 'Unknown error'
       }, 500);
     }
   }
@@ -268,12 +268,12 @@ homeworkRoutes.post(
         message: 'Image problem analyzed successfully'
       }, 201);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error }, 'Failed to analyze homework image');
       return c.json({
         success: false,
         error: 'Failed to analyze image',
-        message: error.message
+        message: error instanceof Error ? error.message : 'Unknown error'
       }, 500);
     }
   }
@@ -385,12 +385,12 @@ homeworkRoutes.post(
         message: 'Document problem analyzed successfully'
       }, 201);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error }, 'Failed to analyze homework document');
       return c.json({
         success: false,
         error: 'Failed to analyze document',
-        message: error.message
+        message: error instanceof Error ? error.message : 'Unknown error'
       }, 500);
     }
   }
@@ -444,7 +444,7 @@ homeworkRoutes.get('/sessions/:sessionId', async (c) => {
       data: session
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, sessionId: c.req.param('sessionId') }, 'Failed to get session');
     return c.json({
       success: false,
@@ -497,7 +497,7 @@ homeworkRoutes.post(
         data: hint
       });
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error, sessionId: c.req.param('sessionId') }, 'Failed to provide hint');
       return c.json({
         success: false,
@@ -567,7 +567,7 @@ homeworkRoutes.post(
         data: evaluation
       });
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error, sessionId: c.req.param('sessionId') }, 'Failed to process answer');
       return c.json({
         success: false,
@@ -648,7 +648,7 @@ homeworkRoutes.post('/sessions/:sessionId/complete', async (c) => {
       message: 'Homework session completed successfully'
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, sessionId: c.req.param('sessionId') }, 'Failed to complete session');
     return c.json({
       success: false,
@@ -739,7 +739,7 @@ homeworkRoutes.get('/student/:studentId/history', async (c) => {
       data: history
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, studentId: c.req.param('studentId') }, 'Failed to get homework history');
     return c.json({
       success: false,

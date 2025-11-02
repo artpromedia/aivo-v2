@@ -9,6 +9,7 @@ import { env } from './env.js';
  */
 
 // Singleton instance
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let supabaseInstance: any | null = null;
 
 /**
@@ -112,15 +113,16 @@ export async function initializeSupabase(): Promise<void> {
     }
     
     logger.info('Supabase connection initialized successfully');
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.warn({
       err: error,
-      message: error.message,
+      message: error instanceof Error ? error.message : 'Unknown error',
     }, 'Supabase connection test failed (this is normal if tables don\'t exist yet)');
     
     // Don't throw error for missing tables, just log it
-    if (!error.message?.includes('relation') && !error.message?.includes('does not exist')) {
-      throw new Error(`Supabase initialization failed: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : '';
+    if (!errorMessage?.includes('relation') && !errorMessage?.includes('does not exist')) {
+      throw new Error(`Supabase initialization failed: ${errorMessage}`);
     }
   }
 }
@@ -135,7 +137,7 @@ export async function closeSupabaseConnection(): Promise<void> {
       await supabaseInstance.removeAllChannels();
       supabaseInstance = null;
       logger.info('Supabase connection closed');
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error }, 'Error closing Supabase connection');
       throw error;
     }
@@ -182,11 +184,11 @@ export async function checkSupabaseHealth(): Promise<{
       status: 'healthy',
       latency,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error }, 'Supabase health check failed');
     return {
       status: 'unhealthy',
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -195,8 +197,10 @@ export async function checkSupabaseHealth(): Promise<{
  * Authentication utilities
  */
 export class SupabaseAuth {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private supabase: any;
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(supabase?: any) {
     this.supabase = supabase || getSupabaseClient();
   }
@@ -206,7 +210,7 @@ export class SupabaseAuth {
    */
   async verifyToken(token: string): Promise<{
     valid: boolean;
-    user?: any;
+    user?: unknown;
     error?: string;
   }> {
     try {
@@ -223,10 +227,10 @@ export class SupabaseAuth {
         valid: true,
         user,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         valid: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -234,7 +238,7 @@ export class SupabaseAuth {
   /**
    * Create new user
    */
-  async createUser(email: string, password: string, userData?: Record<string, any>) {
+  async createUser(email: string, password: string, userData?: Record<string, unknown>) {
     const { data, error } = await this.supabase.auth.admin.createUser({
       email,
       password,
@@ -268,7 +272,7 @@ export class SupabaseAuth {
   async updateUser(userId: string, updates: {
     email?: string;
     password?: string;
-    user_metadata?: Record<string, any>;
+    user_metadata?: Record<string, unknown>;
   }) {
     const { data, error } = await this.supabase.auth.admin.updateUserById(
       userId,
@@ -300,8 +304,10 @@ export class SupabaseAuth {
  * Database utilities for common operations
  */
 export class SupabaseDatabase {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private supabase: any;
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(supabase?: any) {
     this.supabase = supabase || getSupabaseClient();
   }
@@ -309,7 +315,7 @@ export class SupabaseDatabase {
   /**
    * Execute RPC (stored procedure)
    */
-  async rpc(functionName: string, params: Record<string, any> = {}) {
+  async rpc(functionName: string, params: Record<string, unknown> = {}) {
     const { data, error } = await this.supabase.rpc(functionName, params);
     
     if (error) {

@@ -97,7 +97,7 @@ export class TestDatabase {
     // This would use the actual database client when available
   }
 
-  static async createTestFocusSession(studentId: string, options: Partial<any> = {}): Promise<any> {
+  static async createTestFocusSession(studentId: string, options: Partial<Record<string, unknown>> = {}): Promise<Record<string, unknown>> {
     return {
       id: `focus-session-${Date.now()}`,
       studentId,
@@ -113,7 +113,7 @@ export class TestDatabase {
     };
   }
 
-  static async createTestGameTemplate(options: Partial<any> = {}): Promise<any> {
+  static async createTestGameTemplate(options: Partial<Record<string, unknown>> = {}): Promise<Record<string, unknown>> {
     return {
       id: `game-template-${Date.now()}`,
       name: 'Test Math Game',
@@ -148,7 +148,7 @@ export class TestDatabase {
     };
   }
 
-  static async createTestHomeworkSession(studentId: string, options: Partial<any> = {}): Promise<any> {
+  static async createTestHomeworkSession(studentId: string, options: Partial<Record<string, unknown>> = {}): Promise<Record<string, unknown>> {
     return {
       id: `homework-session-${Date.now()}`,
       studentId,
@@ -169,7 +169,7 @@ export class TestDatabase {
     };
   }
 
-  static async createTestWritingDocument(studentId: string, options: Partial<any> = {}): Promise<any> {
+  static async createTestWritingDocument(studentId: string, options: Partial<Record<string, unknown>> = {}): Promise<Record<string, unknown>> {
     return {
       id: `writing-doc-${Date.now()}`,
       studentId,
@@ -190,8 +190,8 @@ export class TestDatabase {
 
 // WebSocket testing utilities
 export class WebSocketTestClient {
-  private ws: any;
-  private messages: any[] = [];
+  private ws: unknown;
+  private messages: unknown[] = [];
 
   constructor(private url: string) {}
 
@@ -206,16 +206,16 @@ export class WebSocketTestClient {
     this.messages = [];
   }
 
-  async sendMessage(message: any): Promise<void> {
+  async sendMessage(message: Record<string, unknown>): Promise<void> {
     console.log('Sending WebSocket message:', message);
     // Mock sending message
   }
 
-  getReceivedMessages(): any[] {
+  getReceivedMessages(): unknown[] {
     return this.messages;
   }
 
-  waitForMessage(timeout: number = 5000): Promise<any> {
+  waitForMessage(timeout: number = 5000): Promise<Record<string, unknown>> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         reject(new Error('WebSocket message timeout'));
@@ -231,37 +231,42 @@ export class WebSocketTestClient {
 }
 
 // API response validation helpers
-export function validateApiResponse(response: any, expectedSchema: any): void {
+export function validateApiResponse(response: unknown, expectedSchema: Record<string, unknown>): void {
   expect(response).toBeDefined();
-  expect(response.success).toBeDefined();
+  
+  // Type guard for response structure
+  const typedResponse = response as { success?: boolean; data?: Record<string, unknown>; error?: { message?: string } };
+  
+  expect(typedResponse.success).toBeDefined();
   
   if (expectedSchema.success !== undefined) {
-    expect(response.success).toBe(expectedSchema.success);
+    expect(typedResponse.success).toBe(expectedSchema.success);
   }
   
-  if (expectedSchema.data && response.success) {
-    expect(response.data).toBeDefined();
+  if (expectedSchema.data && typedResponse.success) {
+    expect(typedResponse.data).toBeDefined();
     
     // Validate required fields if specified
-    if (expectedSchema.data.required) {
-      for (const field of expectedSchema.data.required) {
-        expect(response.data[field]).toBeDefined();
+    const dataSchema = expectedSchema.data as { required?: string[] };
+    if (dataSchema.required) {
+      for (const field of dataSchema.required) {
+        expect(typedResponse.data?.[field]).toBeDefined();
       }
     }
   }
   
-  if (expectedSchema.error && !response.success) {
-    expect(response.error).toBeDefined();
-    expect(response.error.message).toBeDefined();
+  if (expectedSchema.error && !typedResponse.success) {
+    expect(typedResponse.error).toBeDefined();
+    expect(typedResponse.error?.message).toBeDefined();
   }
 }
 
 // Performance testing utilities
 export function measureApiPerformance(testName: string, maxDuration: number = 1000) {
-  return function(target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  return function(target: unknown, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
     
-    descriptor.value = async function(...args: any[]) {
+    descriptor.value = async function(...args: unknown[]) {
       const start = Date.now();
       const result = await method.apply(this, args);
       const duration = Date.now() - start;
@@ -279,18 +284,18 @@ export function measureApiPerformance(testName: string, maxDuration: number = 10
 export const createTestRequest = (app: Hono) => {
   return {
     get: (path: string) => app.request(path, { method: 'GET' }),
-    post: (path: string, data?: any) => app.request(path, { 
+    post: (path: string, data?: Record<string, unknown>) => app.request(path, { 
       method: 'POST', 
       body: data ? JSON.stringify(data) : undefined,
       headers: data ? { 'Content-Type': 'application/json' } : undefined
     }),
-    put: (path: string, data?: any) => app.request(path, { 
+    put: (path: string, data?: Record<string, unknown>) => app.request(path, { 
       method: 'PUT', 
       body: data ? JSON.stringify(data) : undefined,
       headers: data ? { 'Content-Type': 'application/json' } : undefined
     }),
     delete: (path: string) => app.request(path, { method: 'DELETE' }),
-    patch: (path: string, data?: any) => app.request(path, { 
+    patch: (path: string, data?: Record<string, unknown>) => app.request(path, { 
       method: 'PATCH', 
       body: data ? JSON.stringify(data) : undefined,
       headers: data ? { 'Content-Type': 'application/json' } : undefined
@@ -299,3 +304,4 @@ export const createTestRequest = (app: Hono) => {
 };
 
 export { describe, it, expect, beforeAll, afterAll, beforeEach, testClient };
+
