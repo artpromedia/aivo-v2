@@ -156,7 +156,7 @@ jobs:
 
       - name: Store test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ github.run_number }}
           path: |
@@ -257,7 +257,7 @@ jobs:
           pnpm test:integration:verbose --timeout 60000
 
       - name: Store performance results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: performance-results-${{ github.run_number }}
           path: apps/api/test-results/
