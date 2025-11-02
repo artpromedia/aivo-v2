@@ -551,6 +551,9 @@ class WebSocketManager {
   }
 }
 
+// Export the class for testing
+export { WebSocketManager };
+
 // Singleton instance
 export const wsManager = new WebSocketManager();
 

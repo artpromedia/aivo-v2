@@ -450,7 +450,8 @@ async function main() {
   }
 }
 
-if (require.main === module) {
+// ES module check instead of require.main
+if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
 
