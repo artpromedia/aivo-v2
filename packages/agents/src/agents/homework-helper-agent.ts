@@ -7,13 +7,64 @@ import type {
   HomeworkProblem,
   HomeworkHint,
   HomeworkSession,
-  HomeworkAnalysis
+  HomeworkAnalysis,
+  HomeworkStep
 } from '../types';
 import {
-  AgentType,
-  HomeworkSolution
+  AgentType
 } from '../types';
 import type { AivoBrain } from '@aivo/aivo-brain';
+
+/**
+ * Context for homework analysis operations
+ */
+interface HomeworkContext {
+  subject?: string;
+  gradeLevel?: string;
+  problemType?: string;
+  specificPages?: string[] | number[];
+  additionalInstructions?: string;
+}
+
+/**
+ * Answer evaluation result
+ */
+interface AnswerEvaluation {
+  correct: boolean;
+  partialCredit: number;
+  feedback: string;
+  strengths: string[];
+  improvements: string[];
+  misconceptions: string[];
+  encouragement: string;
+  nextGuidance?: string;
+}
+
+/**
+ * Session report summary
+ */
+interface SessionReport {
+  sessionId: string;
+  studentId: string;
+  problem: HomeworkProblem;
+  completedAt: Date;
+  duration: number;
+  performance: {
+    accuracy: number;
+    efficiency: number;
+    independence: number;
+    understanding: number;
+  };
+  summary: {
+    totalSteps: number;
+    stepsCompleted: number;
+    hintsUsed: number;
+    totalAttempts: number;
+    averageTimePerStep: number;
+  };
+  recommendations: string[];
+  nextSteps: string[];
+}
 
 /**
  * HomeworkHelperAgent - Specialized agent for AI-powered homework assistance
@@ -108,8 +159,9 @@ class HomeworkHelperAgent extends BaseAgent implements HomeworkHelperAgentInterf
         throw new Error(`Unsupported image type: ${mimeType}`);
       }
 
-      // Convert image to base64 if needed
-      const base64Image = typeof imageData === 'string' 
+      // Convert image to base64 if needed (for future attachment support)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _base64Image = typeof imageData === 'string' 
         ? imageData 
         : imageData.toString('base64');
 
@@ -123,7 +175,7 @@ class HomeworkHelperAgent extends BaseAgent implements HomeworkHelperAgentInterf
         // Note: Attachment support would need to be added to AivoBrain interface
         // attachments: [{
         //   type: 'image',
-        //   data: base64Image,
+        //   data: _base64Image,
         //   mimeType
         // }]
       });
@@ -329,7 +381,7 @@ class HomeworkHelperAgent extends BaseAgent implements HomeworkHelperAgentInterf
   async submitStepAnswer(
     sessionId: string,
     stepNumber: number,
-    answer: any,
+    answer: string | number | boolean | Record<string, unknown>,
     workShown?: string,
     timeSpent?: number
   ): Promise<{
@@ -341,7 +393,7 @@ class HomeworkHelperAgent extends BaseAgent implements HomeworkHelperAgentInterf
       available: boolean;
     };
     sessionComplete?: boolean;
-    finalReport?: any;
+    finalReport?: SessionReport;
   }> {
     this.assertInitialized();
     
@@ -384,7 +436,7 @@ class HomeworkHelperAgent extends BaseAgent implements HomeworkHelperAgentInterf
 
       // Check if session is complete
       const isComplete = stepNumber === this.currentSession.solution.steps.length - 1;
-      let finalReport = null;
+      let finalReport: SessionReport | undefined;
 
       if (isComplete) {
         this.currentSession.status = 'completed';
@@ -449,7 +501,7 @@ class HomeworkHelperAgent extends BaseAgent implements HomeworkHelperAgentInterf
     return `[Extracted text from ${filename} would appear here. Integration with OCR/document processing services needed.]`;
   }
 
-  private buildImageAnalysisPrompt(context?: any): string {
+  private buildImageAnalysisPrompt(context?: HomeworkContext): string {
     const student = this.context.student;
     
     return `
@@ -506,7 +558,7 @@ Return analysis in JSON format:
     `.trim();
   }
 
-  private buildDocumentAnalysisPrompt(extractedText: string, context?: any): string {
+  private buildDocumentAnalysisPrompt(extractedText: string, context?: HomeworkContext): string {
     const student = this.context.student;
     
     return `
@@ -537,7 +589,7 @@ Use the same JSON format as image analysis.
     `.trim();
   }
 
-  private buildTextAnalysisPrompt(problemText: string, context?: any): string {
+  private buildTextAnalysisPrompt(problemText: string, context?: HomeworkContext): string {
     const student = this.context.student;
     
     return `
@@ -570,7 +622,7 @@ Use the same JSON format as image analysis.
 
   private buildHintPrompt(
     problem: HomeworkProblem,
-    currentStep: any,
+    currentStep: HomeworkStep,
     hintLevel: number,
     studentAttempt?: string,
     specificQuestion?: string
@@ -616,8 +668,8 @@ Return hint in JSON format:
 
   private buildAnswerEvaluationPrompt(
     problem: HomeworkProblem,
-    currentStep: any,
-    answer: any,
+    currentStep: HomeworkStep,
+    answer: string | number | boolean | Record<string, unknown>,
     workShown?: string
   ): string {
     return `
@@ -660,7 +712,7 @@ Return evaluation in JSON format:
     `.trim();
   }
 
-  private parseImageAnalysisResponse(aiResponse: string, context?: any): HomeworkAnalysis {
+  private parseImageAnalysisResponse(aiResponse: string, _context?: HomeworkContext): HomeworkAnalysis {
     try {
       const parsed = JSON.parse(aiResponse);
       return {
@@ -685,12 +737,12 @@ Return evaluation in JSON format:
     }
   }
 
-  private parseDocumentAnalysisResponse(aiResponse: string, extractedText: string, context?: any): HomeworkAnalysis {
+  private parseDocumentAnalysisResponse(aiResponse: string, extractedText: string, context?: HomeworkContext): HomeworkAnalysis {
     // Similar to parseImageAnalysisResponse but for document content
     return this.parseImageAnalysisResponse(aiResponse, context);
   }
 
-  private parseTextAnalysisResponse(aiResponse: string, problemText: string, context?: any): HomeworkAnalysis {
+  private parseTextAnalysisResponse(aiResponse: string, problemText: string, context?: HomeworkContext): HomeworkAnalysis {
     // Similar to parseImageAnalysisResponse but for text content
     return this.parseImageAnalysisResponse(aiResponse, context);
   }
@@ -724,7 +776,7 @@ Return evaluation in JSON format:
     }
   }
 
-  private parseAnswerEvaluationResponse(aiResponse: string): any {
+  private parseAnswerEvaluationResponse(aiResponse: string): AnswerEvaluation {
     try {
       const parsed = JSON.parse(aiResponse);
       return {
@@ -801,8 +853,10 @@ Return evaluation in JSON format:
       (this.currentSession.performance.independence * 0.4);
   }
 
-  private async generateSessionReport(): Promise<any> {
-    if (!this.currentSession) return null;
+  private async generateSessionReport(): Promise<SessionReport> {
+    if (!this.currentSession) {
+      throw new Error('No active session to generate report');
+    }
 
     const completionTime = new Date();
     const duration = Math.round((completionTime.getTime() - this.currentSession.startTime.getTime()) / 1000 / 60); // minutes
