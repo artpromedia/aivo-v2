@@ -4,6 +4,7 @@
 
 // Types and Interfaces
 export * from './types';
+export type { AgentType, AgentConfig, AgentContext } from './types';
 
 // Base Agent Architecture
 export { BaseAgent } from './agents/base-agent';
@@ -17,47 +18,57 @@ export { HomeworkHelperAgent } from './agents/homework-helper-agent';
 export { FocusGuardianAgent } from './agents/focus-guardian-agent';
 export { GameGenerationAgent } from './agents/game-generation-agent';
 
+// Import types and classes for factory
+import type { AivoBrain } from '@aivo/aivo-brain';
+import { AgentType } from './types';
+import type { AgentConfig, AgentContext } from './types';
+import { BaselineAssessmentAgent } from './agents/baseline-assessment-agent';
+import { PersonalModelAgent } from './agents/personal-model-agent';
+import { IEPAssistantAgent } from './agents/iep-assistant-agent';
+import { ProgressMonitorAgent } from './agents/progress-monitor-agent';
+import { FocusGuardianAgent, type FocusGuardianConfig } from './agents/focus-guardian-agent';
+import { GameGenerationAgent } from './agents/game-generation-agent';
+import { HomeworkHelperAgent } from './agents/homework-helper-agent';
+
 // Agent Factory and Utilities
 export class AgentFactory {
   /**
    * Create a specialized agent instance based on type
    */
   static createAgent(
-    type: import('./types').AgentType,
-    config: import('./types').AgentConfig,
-    context: import('./types').AgentContext,
-    aivoBrain: any
+    type: AgentType,
+    config: AgentConfig,
+    context: AgentContext,
+    aivoBrain: AivoBrain
   ) {
-    const { AgentType } = require('./types');
-    
     switch (type) {
-      case AgentType.BASELINE_ASSESSMENT:
-        const { BaselineAssessmentAgent } = require('./agents/baseline-assessment-agent');
+      case AgentType.BASELINE_ASSESSMENT: {
         return new BaselineAssessmentAgent(config, context, aivoBrain);
+      }
         
-      case AgentType.PERSONAL_MODEL:
-        const { PersonalModelAgent } = require('./agents/personal-model-agent');
+      case AgentType.PERSONAL_MODEL: {
         return new PersonalModelAgent(config, context, aivoBrain);
+      }
         
-      case AgentType.IEP_ASSISTANT:
-        const { IEPAssistantAgent } = require('./agents/iep-assistant-agent');
+      case AgentType.IEP_ASSISTANT: {
         return new IEPAssistantAgent(config, context, aivoBrain);
+      }
         
-      case AgentType.PROGRESS_MONITOR:
-        const { ProgressMonitorAgent } = require('./agents/progress-monitor-agent');
+      case AgentType.PROGRESS_MONITOR: {
         return new ProgressMonitorAgent(config, context, aivoBrain);
+      }
         
-      case AgentType.FOCUS_GUARDIAN:
-        const { FocusGuardianAgent } = require('./agents/focus-guardian-agent');
-        return new FocusGuardianAgent(type, config, context, aivoBrain);
+      case AgentType.FOCUS_GUARDIAN: {
+        return new FocusGuardianAgent(config as FocusGuardianConfig, context, aivoBrain);
+      }
         
-      case AgentType.GAME_GENERATOR:
-        const { GameGenerationAgent } = require('./agents/game-generation-agent');
+      case AgentType.GAME_GENERATOR: {
         return new GameGenerationAgent(type, config, context, aivoBrain);
+      }
         
-      case AgentType.HOMEWORK_HELPER:
-        const { HomeworkHelperAgent } = require('./agents/homework-helper-agent');
+      case AgentType.HOMEWORK_HELPER: {
         return new HomeworkHelperAgent(config, context, aivoBrain);
+      }
         
       default:
         throw new Error(`Unknown agent type: ${type}`);
@@ -67,8 +78,7 @@ export class AgentFactory {
   /**
    * Get available agent types
    */
-  static getAvailableTypes(): import('./types').AgentType[] {
-    const { AgentType } = require('./types');
+  static getAvailableTypes(): AgentType[] {
     return Object.values(AgentType);
   }
 }
