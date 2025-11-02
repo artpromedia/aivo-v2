@@ -13,6 +13,7 @@ const Lessons = React.lazy(() => import('./pages/Lessons'));
 const LessonViewer = React.lazy(() => import('./pages/LessonViewer'));
 const Assessments = React.lazy(() => import('./pages/Assessments'));
 const AssessmentViewer = React.lazy(() => import('./pages/AssessmentViewer'));
+const BaselineAssessment = React.lazy(() => import('./pages/BaselineAssessment'));
 const Progress = React.lazy(() => import('./pages/Progress'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const Settings = React.lazy(() => import('./pages/Settings'));
@@ -83,6 +84,7 @@ function App() {
                 <Route path="/lessons/:id" element={<LessonViewer />} />
                 <Route path="/assessments" element={<Assessments />} />
                 <Route path="/assessments/:id" element={<AssessmentViewer />} />
+                <Route path="/assessment/baseline" element={<BaselineAssessment />} />
                 <Route path="/progress" element={<Progress />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/settings" element={<Settings />} />

@@ -9,21 +9,109 @@ interface BrainSuggestionsQueueProps {
   onModify: (suggestionId: string, modification: string, note?: string) => void;
 }
 
+interface ModificationModalProps {
+  suggestion: BrainSuggestion;
+  student: Student | undefined;
+  onSave: (modification: string, note: string) => void;
+  onCancel: () => void;
+}
+
 // Placeholder icons
 const Brain = ({ className }: { className?: string }) => <span className={className}>🧠</span>;
 const CheckCircle = ({ className }: { className?: string }) => <span className={className}>✅</span>;
 const XCircle = ({ className }: { className?: string }) => <span className={className}>❌</span>;
 const Edit = ({ className }: { className?: string }) => <span className={className}>✏️</span>;
 const AlertCircle = ({ className }: { className?: string }) => <span className={className}>⚠️</span>;
+const X = ({ className }: { className?: string }) => <span className={className}>✖️</span>;
+const Save = ({ className }: { className?: string }) => <span className={className}>💾</span>;
+
+function ModificationModal({ suggestion, student, onSave, onCancel }: ModificationModalProps) {
+  const [modification, setModification] = useState('');
+  const [note, setNote] = useState('');
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-900">Modify Suggestion</h2>
+            <button
+              onClick={onCancel}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            Student: {student?.name} • {suggestion.type.charAt(0).toUpperCase() + suggestion.type.slice(1)} Adjustment
+          </p>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div>
+            <h3 className="font-medium text-gray-900 mb-2">Original Suggestion</h3>
+            <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">{suggestion.suggestion}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Your Modification *
+            </label>
+            <textarea
+              value={modification}
+              onChange={(e) => setModification(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={4}
+              placeholder="Describe how you want to modify this suggestion..."
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Implementation Note (Optional)
+            </label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={2}
+              placeholder="Add notes about implementation timing, conditions, etc..."
+            />
+          </div>
+        </div>
+
+        <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => modification.trim() && onSave(modification, note)}
+            disabled={!modification.trim()}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <Save className="w-4 h-4" />
+            <span>Save Modification</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function BrainSuggestionsQueue({
   suggestions,
   students,
   onAccept,
   onReject,
+  onModify,
 }: BrainSuggestionsQueueProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [teacherNotes, setTeacherNotes] = useState<Record<string, string>>({});
+  const [modifyingId, setModifyingId] = useState<string | null>(null);
 
   const getStudent = (brainId: string) => {
     return students.find(s => s.virtualBrain?.id === brainId);
@@ -188,7 +276,7 @@ export function BrainSuggestionsQueue({
                       Accept
                     </button>
                     <button
-                      onClick={() => {/* onModify would go here */}}
+                      onClick={() => setModifyingId(suggestion.id)}
                       className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                     >
                       <Edit className="w-4 h-4" />
@@ -208,6 +296,19 @@ export function BrainSuggestionsQueue({
           );
         })}
       </div>
+
+      {/* Modification Modal */}
+      {modifyingId && (
+        <ModificationModal
+          suggestion={suggestions.find(s => s.id === modifyingId)!}
+          student={getStudent(suggestions.find(s => s.id === modifyingId)!.brainId)}
+          onSave={(modification, note) => {
+            onModify(modifyingId, modification, note);
+            setModifyingId(null);
+          }}
+          onCancel={() => setModifyingId(null)}
+        />
+      )}
     </div>
   );
 }
